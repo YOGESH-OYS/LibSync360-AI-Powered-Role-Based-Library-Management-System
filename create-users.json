@@ -1,0 +1,108 @@
+[
+  {
+    "username": "LIB01",
+    "email": "admin@library.com",
+    "password": "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj3bp.8KqKqK",
+    "role": "admin",
+    "firstName": "Library",
+    "lastName": "Administrator",
+    "registrationNumber": "ADM2024001",
+    "isActive": true,
+    "isEmailVerified": true,
+    "totalBooksBorrowed": 0,
+    "totalFinesPaid": 0,
+    "createdAt": {
+      "$date": "2024-01-15T00:00:00.000Z"
+    },
+    "updatedAt": {
+      "$date": "2024-01-15T00:00:00.000Z"
+    }
+  },
+  {
+    "username": "STAFF01",
+    "email": "staff@library.com",
+    "password": "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj3bp.8KqKqK",
+    "role": "staff",
+    "firstName": "Library",
+    "lastName": "Staff",
+    "registrationNumber": "STAFF2024001",
+    "isActive": true,
+    "isEmailVerified": true,
+    "totalBooksBorrowed": 0,
+    "totalFinesPaid": 0,
+    "createdAt": {
+      "$date": "2024-01-15T00:00:00.000Z"
+    },
+    "updatedAt": {
+      "$date": "2024-01-15T00:00:00.000Z"
+    }
+  },
+  {
+    "username": "STU01",
+    "email": "student@library.com",
+    "password": "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj3bp.8KqKqK",
+    "role": "student",
+    "firstName": "John",
+    "lastName": "Doe",
+    "registrationNumber": "STU2024001",
+    "rollNumber": "CS2024001",
+    "academicCredentials": {
+      "department": "Computer Science",
+      "year": 3,
+      "semester": 5,
+      "cgpa": 3.8
+    },
+    "phone": "+1234567890",
+    "address": {
+      "street": "123 College Street",
+      "city": "University City",
+      "state": "CA",
+      "zipCode": "12345",
+      "country": "USA"
+    },
+    "isActive": true,
+    "isEmailVerified": true,
+    "totalBooksBorrowed": 12,
+    "totalFinesPaid": 5.50,
+    "createdAt": {
+      "$date": "2024-01-15T00:00:00.000Z"
+    },
+    "updatedAt": {
+      "$date": "2024-01-15T00:00:00.000Z"
+    }
+  },
+  {
+    "username": "STU02",
+    "email": "jane.smith@library.com",
+    "password": "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj3bp.8KqKqK",
+    "role": "student",
+    "firstName": "Jane",
+    "lastName": "Smith",
+    "registrationNumber": "STU2024002",
+    "rollNumber": "ENG2024001",
+    "academicCredentials": {
+      "department": "English Literature",
+      "year": 2,
+      "semester": 3,
+      "cgpa": 3.9
+    },
+    "phone": "+1234567891",
+    "address": {
+      "street": "456 University Ave",
+      "city": "University City",
+      "state": "CA",
+      "zipCode": "12345",
+      "country": "USA"
+    },
+    "isActive": true,
+    "isEmailVerified": true,
+    "totalBooksBorrowed": 8,
+    "totalFinesPaid": 0,
+    "createdAt": {
+      "$date": "2024-01-15T00:00:00.000Z"
+    },
+    "updatedAt": {
+      "$date": "2024-01-15T00:00:00.000Z"
+    }
+  }
+]
