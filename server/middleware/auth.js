@@ -11,6 +11,10 @@ const verifyToken = async (req, res, next) => {
       token = req.headers.authorization.split(" ")[1];
     }
 
+    if (!req.cookies.token && token) {
+      req.cookies.token = token;
+    }
+
     if (!token) {
       return res.status(401).json({
         success: false,
@@ -46,7 +50,8 @@ const verifyToken = async (req, res, next) => {
     }
 
     // Check if token is expired (by DB field)
-    if (!user.jwtTokenExpiresAt || user.jwtTokenExpiresAt < new Date()) {
+    // if (!user.jwtToken || user.jwtToken !== token)
+    if (!user.jwtToken || (token && user.jwtToken !== token)) {
       user.jwtToken = null;
       user.jwtTokenExpiresAt = null;
       await user.save();
