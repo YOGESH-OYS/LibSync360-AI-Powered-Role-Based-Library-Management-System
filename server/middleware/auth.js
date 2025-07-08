@@ -5,15 +5,26 @@ const { logger } = require("../utils/logger");
 // Verify JWT token
 const verifyToken = async (req, res, next) => {
   try {
-    let token = req.cookies.token;
+    // let token = req.cookies.token;
 
-    if (!token && req.headers.authorization) {
-      token = req.headers.authorization.split(" ")[1];
-    }
+    // if (!token && req.headers.authorization) {
+    //   token = req.headers.authorization.split(" ")[1];
+    // }
 
-    if (!req.cookies.token && token) {
-      req.cookies.token = token;
-    }
+    // if (!req.cookies.token && token) {
+    //   req.cookies.token = token;
+    // }
+
+    // if (!token) {
+    //   return res.status(401).json({
+    //     success: false,
+    //     message: "Access token required",
+    //   });
+    // }
+
+    const token =
+      req.cookies.token ||
+      (req.headers.authorization && req.headers.authorization.split(" ")[1]);
 
     if (!token) {
       return res.status(401).json({
@@ -21,6 +32,7 @@ const verifyToken = async (req, res, next) => {
         message: "Access token required",
       });
     }
+
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 

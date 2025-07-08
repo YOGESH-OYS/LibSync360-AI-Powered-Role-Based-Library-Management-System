@@ -27,7 +27,6 @@ const PORT = process.env.PORT || 5000;
 
 //PROXY trust
 app.set("trust proxy", 1);
-app.enable("trust proxy");
 
 // Security middleware
 app.use(helmet());

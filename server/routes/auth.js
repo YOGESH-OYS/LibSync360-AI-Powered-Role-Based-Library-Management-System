@@ -32,7 +32,7 @@ const generateToken = (id) => {
 const cookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
-  sameSite: "lax",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   maxAge:
     parseInt(process.env.COOKIE_MAX_AGE_MS, 10) || 3 * 60 * 60 * 1000, // 3 hours fallback
 };
