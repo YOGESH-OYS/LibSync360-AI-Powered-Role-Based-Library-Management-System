@@ -86,7 +86,7 @@ SENDGRID_API_KEY=your_sendgrid_api_key_here
 EMAIL_FROM=your_verified_sender_email@yourdomain.com
 
 # AI Configuration - OpenRouter (Recommended)
-OPENROUTER_API_KEY=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
+OPENROUTER_API_KEY=sk-or-v1-*************************************************2b
 AI_MODEL=openai/gpt-3.5-turbo
 
 # Server Configuration
@@ -152,7 +152,7 @@ The system will automatically create an admin account on first run:
 3. Add to `OPENROUTER_API_KEY`
 4. Choose your preferred model in `AI_MODEL` (default: openai/gpt-3.5-turbo)
 
-**Note**: Your OpenRouter API key is already configured: `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`
+**Note**: Your OpenRouter API key starts with : `sk-or-v1-*************************************************2b`
 
 ## 👥 User Roles & Test Credentials
 
