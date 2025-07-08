@@ -20,18 +20,23 @@ const router = express.Router();
 const authLimiter = rateLimit(authRateLimit);
 
 // Generate JWT token
+// Generate JWT token
 const generateToken = (id) => {
+  const jwtExpiry = process.env.JWT_EXPIRES_IN?.trim() || "7d"; // fallback if undefined
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: "7d",
+    expiresIn: jwtExpiry,
   });
 };
 
+// Cookie options (using fallback if .env is missing)
 const cookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
   sameSite: "lax",
-  maxAge: 3 * 60 * 60 * 1000, // 3 hours in ms
+  maxAge:
+    parseInt(process.env.COOKIE_MAX_AGE_MS, 10) || 3 * 60 * 60 * 1000, // 3 hours fallback
 };
+
 
 // @route   POST /api/auth/login
 // @desc    Authenticate user & get token
