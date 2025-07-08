@@ -25,6 +25,9 @@ const { initializeCronJobs } = require("./services/cronService");
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+//PROXY trust
+app.set("trust proxy", true);
+
 // Security middleware
 app.use(helmet());
 app.use(compression());
