@@ -127,8 +127,10 @@ npm run client
 
 The system will automatically create an admin account on first run:
 
-- **Email**: admin@library.com
-- **Password**: admin123
+- **Email**: LIB01
+- **Password**: password123
+- **OR**: USE THE DEMO CREDENTIALS PROVIDED ON THE SIGNIN PAGES TO REFER EVERY ROLES
+
 
 ## 🔑 API Keys Setup
 
