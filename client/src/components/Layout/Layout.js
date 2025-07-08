@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  BookOpenIcon, 
-  UserIcon, 
-  HomeIcon, 
+import React, { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  BookOpenIcon,
+  UserIcon,
+  HomeIcon,
   BellIcon,
   CogIcon,
   Bars3Icon,
@@ -16,100 +16,122 @@ import {
   ChartBarIcon,
   DocumentTextIcon,
   ExclamationTriangleIcon,
-  ArrowRightOnRectangleIcon
-} from '@heroicons/react/24/outline';
-import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
+  ArrowRightOnRectangleIcon,
+} from "@heroicons/react/24/outline";
+import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
+import { useNotifications } from "../../context/NotificationContext";
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+  const { unreadCount, resetUnreadCount } = useNotifications();
   const location = useLocation();
   const navigate = useNavigate();
 
   const navigation = [
     {
-      name: 'Dashboard',
-      href: '/dashboard',
+      name: "Dashboard",
+      href: "/dashboard",
       icon: HomeIcon,
-      roles: ['admin', 'staff', 'student']
+      roles: ["admin", "staff", "student"],
     },
     {
-      name: 'Books',
-      href: '/books',
+      name: "Books",
+      href: "/books",
       icon: BookOpenIcon,
-      roles: ['admin', 'staff', 'student']
+      roles: ["admin", "staff", "student"],
     },
     {
-      name: 'My Books',
-      href: '/my-books',
+      name: "My Books",
+      href: "/my-books",
       icon: DocumentTextIcon,
-      roles: ['student']
+      roles: ["student"],
     },
     {
-      name: 'Borrowings',
-      href: '/borrowings',
+      name: "Borrowings",
+      href: "/borrowings",
       icon: ChartBarIcon,
-      roles: ['admin', 'staff', 'student']
+      roles: ["admin", "staff", "student"],
     },
     {
-      name: 'Fines',
-      href: '/fines',
+      name: "Fines",
+      href: "/fines",
       icon: ExclamationTriangleIcon,
-      roles: ['admin', 'staff', 'student']
+      roles: ["admin", "staff", "student"],
     },
     {
-      name: 'Notifications',
-      href: '/notifications',
+      name: "Notifications",
+      href: "/notifications",
       icon: BellIcon,
-      roles: ['admin', 'staff', 'student']
+      roles: ["admin", "staff", "student"],
     },
     {
-      name: 'Profile',
-      href: '/profile',
+      name: "Profile",
+      href: "/profile",
       icon: UserIcon,
-      roles: ['admin', 'staff', 'student']
-    }
-  ];
-
-  const staffNavigation = [
-    {
-      name: 'Staff Panel',
-      href: '/staff',
-      icon: UserGroupIcon,
-      roles: ['admin', 'staff']
-    }
+      roles: ["admin", "staff", "student"],
+    },
   ];
 
   const adminNavigation = [
     {
-      name: 'Admin Panel',
-      href: '/admin',
+      name: "Admin Dashboard",
+      href: "/admin",
       icon: AcademicCapIcon,
-      roles: ['admin']
+      roles: ["admin"],
     },
     {
-      name: 'User Management',
-      href: '/admin/users',
+      name: "Book Management",
+      href: "/admin/books",
+      icon: BookOpenIcon,
+      roles: ["admin"],
+    },
+    {
+      name: "Borrowing Logs",
+      href: "/admin/borrowings",
+      icon: ChartBarIcon,
+      roles: ["admin"],
+    },
+    {
+      name: "Fine Management",
+      href: "/admin/fines",
+      icon: ExclamationTriangleIcon,
+      roles: ["admin"],
+    },
+    {
+      name: "User Management",
+      href: "/admin/users",
       icon: UserGroupIcon,
-      roles: ['admin']
-    }
+      roles: ["admin"],
+    },
+  ];
+
+  const staffNavigation = [
+    {
+      name: "Staff Panel",
+      href: "/staff",
+      icon: UserGroupIcon,
+      roles: ["admin", "staff"],
+    },
   ];
 
   const allNavigation = [...navigation, ...adminNavigation, ...staffNavigation];
 
-  const filteredNavigation = allNavigation.filter(item => 
+  const filteredNavigation = allNavigation.filter((item) =>
     item.roles.includes(user?.role)
   );
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate("/");
   };
 
   return (
-    <div className={`min-h-screen ${isDark ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
+    <div
+      className={`min-h-screen ${isDark ? "dark bg-gray-900" : "bg-gray-50"}`}
+    >
       {/* Mobile sidebar */}
       <AnimatePresence>
         {sidebarOpen && (
@@ -119,7 +141,10 @@ const Layout = ({ children }) => {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 lg:hidden"
           >
-            <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
+            <div
+              className="fixed inset-0 bg-gray-600 bg-opacity-75"
+              onClick={() => setSidebarOpen(false)}
+            />
             <motion.div
               initial={{ x: -300 }}
               animate={{ x: 0 }}
@@ -141,12 +166,25 @@ const Layout = ({ children }) => {
                       to={item.href}
                       className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ${
                         isActive
-                          ? 'bg-blue-100 text-blue-900 dark:bg-blue-900 dark:text-blue-100'
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'
+                          ? "bg-blue-100 text-blue-900 dark:bg-blue-900 dark:text-blue-100"
+                          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
                       }`}
-                      onClick={() => setSidebarOpen(false)}
+                      onClick={() => {
+                        setSidebarOpen(false);
+                        // Reset notification count when clicking on notifications in mobile
+                        if (item.href === "/notifications") {
+                          resetUnreadCount();
+                        }
+                      }}
                     >
-                      <item.icon className="mr-3 h-5 w-5" />
+                      <div className="relative mr-3">
+                        <item.icon className="h-5 w-5" />
+                        {item.href === "/notifications" && unreadCount > 0 && (
+                          <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-medium">
+                            {unreadCount > 99 ? "99+" : unreadCount}
+                          </span>
+                        )}
+                      </div>
                       {item.name}
                     </Link>
                   );
@@ -175,11 +213,24 @@ const Layout = ({ children }) => {
                   to={item.href}
                   className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ${
                     isActive
-                      ? 'bg-blue-100 text-blue-900 dark:bg-blue-900 dark:text-blue-100'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'
+                      ? "bg-blue-100 text-blue-900 dark:bg-blue-900 dark:text-blue-100"
+                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
                   }`}
+                  onClick={() => {
+                    // Reset notification count when clicking on notifications in desktop
+                    if (item.href === "/notifications") {
+                      resetUnreadCount();
+                    }
+                  }}
                 >
-                  <item.icon className="mr-3 h-5 w-5" />
+                  <div className="relative mr-3">
+                    <item.icon className="h-5 w-5" />
+                    {item.href === "/notifications" && unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-medium">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
+                  </div>
                   {item.name}
                 </Link>
               );
@@ -219,9 +270,15 @@ const Layout = ({ children }) => {
               {/* Notifications */}
               <Link
                 to="/notifications"
-                className="p-2 text-gray-400 hover:text-gray-500 dark:text-gray-300 dark:hover:text-gray-200"
+                className="relative p-2 text-gray-400 hover:text-gray-500 dark:text-gray-300 dark:hover:text-gray-200"
+                onClick={resetUnreadCount}
               >
                 <BellIcon className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-medium">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
               </Link>
 
               {/* Profile dropdown */}
@@ -237,7 +294,8 @@ const Layout = ({ children }) => {
                   </div>
                   <div className="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
                     <span className="text-sm font-medium text-white">
-                      {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+                      {user?.firstName?.charAt(0)}
+                      {user?.lastName?.charAt(0)}
                     </span>
                   </div>
                 </div>
@@ -266,4 +324,4 @@ const Layout = ({ children }) => {
   );
 };
 
-export default Layout; 
+export default Layout;

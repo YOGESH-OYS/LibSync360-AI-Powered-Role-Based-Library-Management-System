@@ -1,66 +1,61 @@
-import React from 'react';
-import { useRouteError } from 'react-router-dom';
-import { ExclamationTriangleIcon, HomeIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import React from "react";
+import { useAuth } from "../../context/AuthContext";
 
-const ErrorFallback = ({ error, resetErrorBoundary }) => {
-  const routeError = useRouteError();
-  const errorToDisplay = error || routeError;
+function ErrorFallback({ error, resetErrorBoundary }) {
+  const { logout } = useAuth();
 
-  const handleReset = () => {
-    if (resetErrorBoundary) {
-      resetErrorBoundary();
-    } else {
-      window.location.reload();
-    }
-  };
+  // Check if it's a session expired error
+  const isSessionExpired =
+    error?.message?.toLowerCase().includes("session expired") ||
+    error?.response?.status === 401;
 
-  const handleGoHome = () => {
-    window.location.href = '/';
-  };
+  if (isSessionExpired) {
+    // Handle session expired by logging out
+    logout();
+    return null;
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <div className="text-center">
-            <ExclamationTriangleIcon className="mx-auto h-12 w-12 text-red-500" />
-            <h1 className="mt-4 text-2xl font-bold text-gray-900">
-              Something went wrong
-            </h1>
-            <p className="mt-2 text-sm text-gray-600">
-              We're sorry, but something unexpected happened. Please try again.
-            </p>
-            
-            {process.env.NODE_ENV === 'development' && errorToDisplay && (
-              <div className="mt-4 p-4 bg-red-50 rounded-md">
-                <h3 className="text-sm font-medium text-red-800">Error Details:</h3>
-                <pre className="mt-2 text-xs text-red-700 overflow-auto">
-                  {errorToDisplay.message || errorToDisplay.toString()}
-                </pre>
-              </div>
-            )}
-            
-            <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
-              <button
-                onClick={handleReset}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <ArrowPathIcon className="mr-2 h-4 w-4" />
-                Try Again
-              </button>
-              <button
-                onClick={handleGoHome}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <HomeIcon className="mr-2 h-4 w-4" />
-                Go Home
-              </button>
-            </div>
-          </div>
+    <div
+      role="alert"
+      className="p-6 bg-red-50 border border-red-200 rounded-lg"
+    >
+      <div className="flex items-center mb-4">
+        <div className="flex-shrink-0">
+          <svg
+            className="h-5 w-5 text-red-400"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </div>
+        <div className="ml-3">
+          <h3 className="text-sm font-medium text-red-800">
+            Something went wrong
+          </h3>
         </div>
       </div>
+      <div className="text-sm text-red-700">
+        <p className="mb-2">An unexpected error occurred:</p>
+        <pre className="bg-red-100 p-2 rounded text-xs overflow-auto">
+          {error?.message || "Unknown error"}
+        </pre>
+      </div>
+      {resetErrorBoundary && (
+        <button
+          onClick={resetErrorBoundary}
+          className="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition-colors"
+        >
+          Try again
+        </button>
+      )}
     </div>
   );
-};
+}
 
-export default ErrorFallback; 
+export default ErrorFallback;

@@ -39,12 +39,12 @@ const Login = () => {
   const handleDemoLogin = (role) => {
     if (role === 'admin') {
       setValue('username', 'LIB01');
-      setValue('password', '123@321');
+      setValue('password', 'password123');
     } else if (role === 'staff') {
-      setValue('username', 'staff1');
+      setValue('username', 'STAFF01');
       setValue('password', 'password123');
     } else {
-      setValue('username', 'student1');
+      setValue('username', 'STU01');
       setValue('password', 'password123');
     }
   };

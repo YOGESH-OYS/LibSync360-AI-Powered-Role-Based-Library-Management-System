@@ -64,9 +64,9 @@ const Home = () => {
             </div>
             <div className="hidden md:flex items-center space-x-8">
               <Link to="/help" className="text-gray-600 hover:text-gray-900">Help</Link>
-              <Link to="/login" className="text-gray-600 hover:text-gray-900">Login</Link>
+              <Link to="/login" className="text-gray-600 hover:text-gray-900">About Collage</Link>
               <Link 
-                to="/register" 
+                to="/login" 
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Get Started
@@ -96,12 +96,12 @@ const Home = () => {
                 Sign In
                 <ArrowRightIcon className="ml-2 h-5 w-5" />
               </Link>
-              <Link 
+              {/* <Link 
                 to="/register" 
                 className="border-2 border-blue-600 text-blue-600 px-8 py-3 rounded-lg text-lg font-semibold hover:bg-blue-50 transition-colors"
               >
                 Create Account
-              </Link>
+              </Link> */}
             </div>
           </div>
         </div>

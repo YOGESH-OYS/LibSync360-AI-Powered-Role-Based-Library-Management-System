@@ -2,7 +2,7 @@
   {
     "username": "LIB01",
     "email": "admin@library.com",
-    "password": "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj3bp.8KqKqK",
+    "password": "$2b$12$U/0tkZgjLtpUNju/nO50BeBcwwhVRjz9GLSAM5XjXXFK0d.dTeIEW",
     "role": "admin",
     "firstName": "Library",
     "lastName": "Administrator",
@@ -11,17 +11,13 @@
     "isEmailVerified": true,
     "totalBooksBorrowed": 0,
     "totalFinesPaid": 0,
-    "createdAt": {
-      "$date": "2024-01-15T00:00:00.000Z"
-    },
-    "updatedAt": {
-      "$date": "2024-01-15T00:00:00.000Z"
-    }
+    "jwtToken": null,
+    "jwtTokenExpiresAt": null
   },
   {
     "username": "STAFF01",
     "email": "staff@library.com",
-    "password": "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj3bp.8KqKqK",
+    "password": "$2b$12$U/0tkZgjLtpUNju/nO50BeBcwwhVRjz9GLSAM5XjXXFK0d.dTeIEW",
     "role": "staff",
     "firstName": "Library",
     "lastName": "Staff",
@@ -30,17 +26,13 @@
     "isEmailVerified": true,
     "totalBooksBorrowed": 0,
     "totalFinesPaid": 0,
-    "createdAt": {
-      "$date": "2024-01-15T00:00:00.000Z"
-    },
-    "updatedAt": {
-      "$date": "2024-01-15T00:00:00.000Z"
-    }
+    "jwtToken": null,
+    "jwtTokenExpiresAt": null
   },
   {
     "username": "STU01",
     "email": "student@library.com",
-    "password": "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj3bp.8KqKqK",
+    "password": "$2b$12$U/0tkZgjLtpUNju/nO50BeBcwwhVRjz9GLSAM5XjXXFK0d.dTeIEW",
     "role": "student",
     "firstName": "John",
     "lastName": "Doe",
@@ -64,12 +56,8 @@
     "isEmailVerified": true,
     "totalBooksBorrowed": 12,
     "totalFinesPaid": 5.50,
-    "createdAt": {
-      "$date": "2024-01-15T00:00:00.000Z"
-    },
-    "updatedAt": {
-      "$date": "2024-01-15T00:00:00.000Z"
-    }
+    "jwtToken": null,
+    "jwtTokenExpiresAt": null
   },
   {
     "username": "STU02",

@@ -1,11 +1,19 @@
 import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import AdminBooks from './AdminBooks';
+import AdminBorrowings from './AdminBorrowings';
+import AdminFines from './AdminFines';
+import AdminUsers from './AdminUsers';
 
 const AdminPanel = () => {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-gray-900 mb-4">Admin Panel</h1>
-      <p className="text-gray-600">This page will show admin controls and management tools.</p>
-    </div>
+    <Routes>
+      <Route path="/" element={<Navigate to="/admin/books" replace />} />
+      <Route path="/books" element={<AdminBooks />} />
+      <Route path="/borrowings" element={<AdminBorrowings />} />
+      <Route path="/fines" element={<AdminFines />} />
+      <Route path="/users" element={<AdminUsers />} />
+    </Routes>
   );
 };
 

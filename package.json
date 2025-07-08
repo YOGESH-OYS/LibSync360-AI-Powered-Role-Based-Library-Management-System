@@ -12,11 +12,22 @@
     "test": "jest",
     "test:watch": "jest --watch"
   },
-  "keywords": ["library", "management", "mern", "ai", "college"],
+  "keywords": [
+    "library",
+    "management",
+    "mern",
+    "ai",
+    "college"
+  ],
   "author": "Library Management Team",
   "license": "MIT",
   "devDependencies": {
     "concurrently": "^8.2.2",
     "jest": "^29.7.0"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.16.1"
   }
-} 
+}

@@ -8,7 +8,6 @@ import ProtectedRoute from './components/Auth/ProtectedRoute';
 // Pages
 import Home from './pages/Home';
 import Login from './pages/Auth/Login';
-import Register from './pages/Auth/Register';
 import Dashboard from './pages/Dashboard/Dashboard';
 import BookCatalog from './pages/Books/BookCatalog';
 import BookDetail from './pages/Books/BookDetail';
@@ -29,7 +28,6 @@ function App() {
         {/* Public routes */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
         <Route path="/help" element={<Help />} />
         
         {/* Protected routes */}
