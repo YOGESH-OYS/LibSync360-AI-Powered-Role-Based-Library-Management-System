@@ -40,7 +40,7 @@ const cookieOptions = {
 
 // @route   POST /api/auth/login
 // @desc    Authenticate user & get token
-// @access  Public
+// @access  Public  
 router.post(
   "/login",
   authLimiter,
