@@ -44,12 +44,6 @@ const Layout = ({ children }) => {
       roles: ["admin", "staff", "student"],
     },
     {
-      name: "My Books",
-      href: "/my-books",
-      icon: DocumentTextIcon,
-      roles: ["student"],
-    },
-    {
       name: "Borrowings",
       href: "/borrowings",
       icon: ChartBarIcon,

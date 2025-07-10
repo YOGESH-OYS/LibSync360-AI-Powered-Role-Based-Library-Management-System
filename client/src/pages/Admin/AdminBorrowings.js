@@ -304,22 +304,17 @@ const AdminBorrowings = () => {
                           <div className="flex items-center">
                             <CalendarIcon className="h-4 w-4 mr-1" />
                             Borrowed:{" "}
-                            {new Date(
-                              borrowing.borrowedAt
-                            ).toLocaleDateString()}
+                            {new Date(borrowing.borrowedAt).toLocaleString()}
                           </div>
                           <div className="flex items-center mt-1">
                             <CalendarIcon className="h-4 w-4 mr-1" />
-                            Due:{" "}
-                            {new Date(borrowing.dueDate).toLocaleDateString()}
+                            Due: {new Date(borrowing.dueDate).toLocaleString()}
                           </div>
                           {borrowing.returnedAt && (
                             <div className="flex items-center mt-1 text-green-600">
                               <CalendarIcon className="h-4 w-4 mr-1" />
                               Returned:{" "}
-                              {new Date(
-                                borrowing.returnedAt
-                              ).toLocaleDateString()}
+                              {new Date(borrowing.returnedAt).toLocaleString()}
                             </div>
                           )}
                         </div>

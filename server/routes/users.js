@@ -204,10 +204,10 @@ router.get(
   }
 );
 
-// Get user by ID (Admin only)
+// Get user by ID (Admin and Staff for students)
 router.get(
   "/:id",
-  [authenticateToken, authorizeRoles("admin")],
+  [authenticateToken, authorizeRoles("admin", "staff")],
   async (req, res) => {
     try {
       const user = await User.findById(req.params.id)
@@ -219,7 +219,23 @@ router.get(
         return res.status(404).json({ message: "User not found" });
       }
 
-      res.json(user);
+      // If staff, only allow viewing students
+      if (req.user.role === "staff" && user.role !== "student") {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      // Add totalBooksBorrowed and currentlyBorrowedCount
+      const totalBooksBorrowed = user.borrowedBooks
+        ? user.borrowedBooks.length
+        : 0;
+      const currentlyBorrowedCount = user.borrowedBooks
+        ? user.borrowedBooks.filter((b) => !b.returnedAt).length
+        : 0;
+      const userObj = user.toObject();
+      userObj.totalBooksBorrowed = totalBooksBorrowed;
+      userObj.currentlyBorrowedCount = currentlyBorrowedCount;
+
+      res.json(userObj);
     } catch (error) {
       logger.error("Error fetching user:", error);
       res.status(500).json({ message: "Server error" });
@@ -470,6 +486,27 @@ router.post(
       logger.error("Error verifying password:", error);
       res.status(500).json({ success: false, message: "Server error" });
     }
+  }
+);
+
+// Staff: Search/filter students for lending
+router.get(
+  "/students/search",
+  authenticateToken,
+  authorizeRoles("staff"),
+  async (req, res) => {
+    const { search } = req.query;
+    const query = { role: "student" };
+    if (search) {
+      query.$or = [
+        { firstName: { $regex: search, $options: "i" } },
+        { lastName: { $regex: search, $options: "i" } },
+        { registrationNumber: { $regex: search, $options: "i" } },
+        { rollNumber: { $regex: search, $options: "i" } },
+      ];
+    }
+    const students = await User.find(query).select("-password").limit(20);
+    res.json(students);
   }
 );
 

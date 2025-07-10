@@ -30,6 +30,7 @@ import {
   isSessionExpiredResponse,
   isSessionExpiredError,
 } from "../../utils/sessionUtils";
+import axios from "../../services/api";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -39,6 +40,20 @@ const Dashboard = () => {
   const [unreadNotifications, setUnreadNotifications] = useState([]);
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [lendModalOpen, setLendModalOpen] = useState(false);
+  const [studentSearch, setStudentSearch] = useState("");
+  const [studentResults, setStudentResults] = useState([]);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [studentDetails, setStudentDetails] = useState(null);
+  const [lendBookModalOpen, setLendBookModalOpen] = useState(false);
+  const [bookSearch, setBookSearch] = useState("");
+  const [bookResults, setBookResults] = useState([]);
+  const [studentDetailsLoading, setStudentDetailsLoading] = useState(false);
+  const [studentDetailsError, setStudentDetailsError] = useState(null);
+  const [showBookDropdown, setShowBookDropdown] = useState(false);
+  const [bookDropdownSearch, setBookDropdownSearch] = useState("");
+  const [bookDropdownResults, setBookDropdownResults] = useState([]);
+  const [bookDropdownPage, setBookDropdownPage] = useState(1);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -153,6 +168,117 @@ const Dashboard = () => {
 
     fetchDashboardData();
   }, [user.role]);
+
+  // Student search
+  useEffect(() => {
+    if (lendModalOpen && studentSearch.length > 0) {
+      axios
+        .get(
+          `/users/students/search?search=${encodeURIComponent(studentSearch)}`
+        )
+        .then((res) => setStudentResults(res.data))
+        .catch(() => setStudentResults([]));
+    } else {
+      setStudentResults([]);
+    }
+  }, [studentSearch, lendModalOpen]);
+
+  // Fetch student details
+  const handleSelectStudent = (student) => {
+    setSelectedStudent(student);
+    setStudentDetails(null);
+    setStudentDetailsLoading(true);
+    setStudentDetailsError(null);
+    axios
+      .get(`/users/${student._id}`)
+      .then((res) => {
+        setStudentDetails(res.data);
+        setStudentDetailsLoading(false);
+      })
+      .catch(() => {
+        setStudentDetails(null);
+        setStudentDetailsLoading(false);
+        setStudentDetailsError("Failed to load student details.");
+      });
+  };
+
+  // Book search
+  useEffect(() => {
+    if (lendBookModalOpen && bookSearch.length > 0) {
+      axios
+        .get(`/books/search/available?search=${encodeURIComponent(bookSearch)}`)
+        .then((res) => setBookResults(res.data))
+        .catch(() => setBookResults([]));
+    } else {
+      setBookResults([]);
+    }
+  }, [bookSearch, lendBookModalOpen]);
+
+  // Lend book action
+  const handleLendBook = (bookId) => {
+    axios
+      .post("/borrowings/lend", { studentId: selectedStudent._id, bookId })
+      .then(() => {
+        setLendBookModalOpen(false);
+        // Refresh student details
+        axios
+          .get(`/users/${selectedStudent._id}`)
+          .then((res) => setStudentDetails(res.data));
+      });
+  };
+
+  // Return book action (for demo, not in UI yet)
+  const handleReturnBook = (bookId) => {
+    axios
+      .post("/borrowings/return", { studentId: selectedStudent._id, bookId })
+      .then(() => {
+        // Refresh student details
+        axios
+          .get(`/users/${selectedStudent._id}`)
+          .then((res) => setStudentDetails(res.data));
+      });
+  };
+
+  // Book search for dropdown
+  useEffect(() => {
+    if (showBookDropdown && bookDropdownSearch.length > 0) {
+      axios
+        .get(
+          `/books/search/available?search=${encodeURIComponent(
+            bookDropdownSearch
+          )}`
+        )
+        .then((res) => setBookDropdownResults(res.data))
+        .catch(() => setBookDropdownResults([]));
+    } else if (showBookDropdown) {
+      axios
+        .get(`/books/search/available`)
+        .then((res) => setBookDropdownResults(res.data))
+        .catch(() => setBookDropdownResults([]));
+    } else {
+      setBookDropdownResults([]);
+    }
+    setBookDropdownPage(1);
+  }, [bookDropdownSearch, showBookDropdown]);
+
+  const booksPerPage = 4;
+  const pagedBooks = bookDropdownResults.slice(
+    (bookDropdownPage - 1) * booksPerPage,
+    bookDropdownPage * booksPerPage
+  );
+  const totalBookPages = Math.ceil(bookDropdownResults.length / booksPerPage);
+
+  const handleLendBookDropdown = (bookId) => {
+    axios
+      .post("/borrowings/lend", { studentId: selectedStudent._id, bookId })
+      .then(() => {
+        setShowBookDropdown(false);
+        // Refresh student details
+        axios
+          .get(`/users/${selectedStudent._id}`)
+          .then((res) => setStudentDetails(res.data));
+      });
+  };
 
   const getRoleSpecificContent = () => {
     switch (user.role) {
@@ -495,7 +621,10 @@ const Dashboard = () => {
               </div>
               <div className="card-body">
                 <div className="grid grid-cols-2 gap-4">
-                  <button className="btn-primary">
+                  <button
+                    onClick={() => setLendModalOpen(true)}
+                    className="btn-primary"
+                  >
                     <BookOpenIcon className="mr-2 h-4 w-4" />
                     Lend Book
                   </button>
@@ -688,6 +817,699 @@ const Dashboard = () => {
         {/* Role-specific content */}
         {getRoleSpecificContent()}
       </div>
+      {/* Lend Book Modal: Student Search (Full-page style) */}
+      {lendModalOpen && (
+        <div
+          style={{
+            position: "fixed",
+            top: "0.5cm",
+            left: "0.5cm",
+            right: "0.5cm",
+            bottom: "0.5cm",
+            background: "var(--modal-bg, #181f2a)",
+            zIndex: 1000,
+            borderRadius: "16px",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
+            padding: "2rem",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            color: "#fff", // Make all text white
+          }}
+        >
+          <h2 style={{ fontSize: "2rem", marginBottom: "1rem", color: "#fff" }}>
+            Select Student
+          </h2>
+          <input
+            value={studentSearch}
+            onChange={(e) => setStudentSearch(e.target.value)}
+            placeholder="Search students..."
+            style={{
+              width: "60%",
+              padding: "0.75rem",
+              fontSize: "1.1rem",
+              borderRadius: "8px",
+              border: "1px solid #444",
+              marginBottom: "1.5rem",
+              color: "#fff",
+              background: "#222e3c",
+            }}
+          />
+          <ul
+            style={{
+              width: "60%",
+              maxHeight: "300px",
+              overflowY: "auto",
+              marginBottom: "2rem",
+            }}
+          >
+            {studentResults.map((stu) => (
+              <li
+                key={stu._id}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "0.75rem",
+                  borderBottom: "1px solid #333",
+                  cursor: "pointer",
+                  color: "#fff",
+                }}
+                onClick={() => {
+                  setLendModalOpen(false);
+                  handleSelectStudent(stu); // Only close modal, do not reset selectedStudent
+                }}
+              >
+                <span>
+                  {stu.firstName} {stu.lastName} (
+                  {stu.registrationNumber || stu.rollNumber})
+                </span>
+                <span
+                  style={{
+                    display: "flex",
+                    gap: "1.5rem",
+                    alignItems: "center",
+                    fontSize: "0.95rem",
+                  }}
+                >
+                  <span title="Books currently borrowed">
+                    📚 {stu.borrowedBooks ? stu.borrowedBooks.length : 0}
+                  </span>
+                  <span title="Year">
+                    {stu.academicCredentials?.year
+                      ? `Year ${stu.academicCredentials.year}`
+                      : ""}
+                  </span>
+                  <span title="Department">
+                    {stu.academicCredentials?.department || ""}
+                  </span>
+                  <span
+                    title="Status"
+                    style={{
+                      color: stu.isActive ? "#4ade80" : "#f87171",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {stu.isActive ? "🟢 Active" : "🔴 Inactive"}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+          <button
+            onClick={() => setLendModalOpen(false)}
+            style={{
+              marginTop: "auto",
+              padding: "0.75rem 2rem",
+              fontSize: "1.1rem",
+              borderRadius: "8px",
+              background: "#222e3c",
+              color: "#fff",
+              border: "none",
+            }}
+          >
+            Close
+          </button>
+        </div>
+      )}
+      {/* Student Details Modal (Full-page style) */}
+      {selectedStudent && (
+        <div
+          style={{
+            position: "fixed",
+            top: "0.5cm",
+            left: "0.5cm",
+            right: "0.5cm",
+            bottom: "0.5cm",
+            background: "var(--modal-bg, #181f2a)",
+            zIndex: 1000,
+            borderRadius: "16px",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
+            padding: "2rem",
+            display: "flex",
+            flexDirection: "column",
+            color: "#fff",
+            overflowY: "auto",
+          }}
+        >
+          {studentDetailsLoading && (
+            <div
+              style={{
+                textAlign: "center",
+                width: "100%",
+                marginTop: "4rem",
+                fontSize: "1.5rem",
+              }}
+            >
+              Loading student details...
+            </div>
+          )}
+          {studentDetailsError && (
+            <div
+              style={{
+                color: "#f87171",
+                textAlign: "center",
+                width: "100%",
+                marginTop: "4rem",
+                fontSize: "1.2rem",
+              }}
+            >
+              {studentDetailsError}
+            </div>
+          )}
+          {studentDetails && (
+            <>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                  width: "100%",
+                }}
+              >
+                <div>
+                  <h2 style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>
+                    {studentDetails.firstName} {studentDetails.lastName}
+                  </h2>
+                  <div style={{ marginBottom: "0.5rem" }}>
+                    <span style={{ marginRight: "1.5rem" }}>
+                      Reg#:{" "}
+                      <b>
+                        {studentDetails.registrationNumber ||
+                          studentDetails.rollNumber}
+                      </b>
+                    </span>
+                    <span style={{ marginRight: "1.5rem" }}>
+                      Year:{" "}
+                      <b>{studentDetails.academicCredentials?.year || "-"}</b>
+                    </span>
+                    <span style={{ marginRight: "1.5rem" }}>
+                      Dept:{" "}
+                      <b>
+                        {studentDetails.academicCredentials?.department || "-"}
+                      </b>
+                    </span>
+                    <span>
+                      Status:{" "}
+                      <b
+                        style={{
+                          color: studentDetails.isActive
+                            ? "#4ade80"
+                            : "#f87171",
+                        }}
+                      >
+                        {studentDetails.isActive ? "🟢 Active" : "🔴 Inactive"}
+                      </b>
+                    </span>
+                  </div>
+                  <div style={{ marginBottom: "0.5rem" }}>
+                    <span style={{ marginRight: "1.5rem" }}>
+                      Email: <b>{studentDetails.email}</b>
+                    </span>
+                    <span>
+                      Phone: <b>{studentDetails.phone || "-"}</b>
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setSelectedStudent(null);
+                    setStudentDetails(null);
+                  }}
+                  style={{
+                    padding: "0.5rem 1.5rem",
+                    fontSize: "1.1rem",
+                    borderRadius: "8px",
+                    background: "#222e3c",
+                    color: "#fff",
+                    border: "none",
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+              <hr style={{ border: "1px solid #333", margin: "1.5rem 0" }} />
+              {/* Stats */}
+              <div
+                style={{ display: "flex", gap: "2.5rem", marginBottom: "2rem" }}
+              >
+                <div
+                  style={{
+                    background: "#222e3c",
+                    borderRadius: "10px",
+                    padding: "1.2rem 2.5rem",
+                    minWidth: "180px",
+                    textAlign: "center",
+                  }}
+                >
+                  <div style={{ fontSize: "1.2rem", marginBottom: "0.3rem" }}>
+                    Total Borrowed
+                  </div>
+                  <div style={{ fontSize: "2rem", fontWeight: 700 }}>
+                    {studentDetails.totalBooksBorrowed || 0}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    background: "#222e3c",
+                    borderRadius: "10px",
+                    padding: "1.2rem 2.5rem",
+                    minWidth: "180px",
+                    textAlign: "center",
+                  }}
+                >
+                  <div style={{ fontSize: "1.2rem", marginBottom: "0.3rem" }}>
+                    Currently Borrowed
+                  </div>
+                  <div style={{ fontSize: "2rem", fontWeight: 700 }}>
+                    {studentDetails.currentlyBorrowedCount || 0}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    background: "#222e3c",
+                    borderRadius: "10px",
+                    padding: "1.2rem 2.5rem",
+                    minWidth: "180px",
+                    textAlign: "center",
+                  }}
+                >
+                  <div style={{ fontSize: "1.2rem", marginBottom: "0.3rem" }}>
+                    Fines Paid
+                  </div>
+                  <div style={{ fontSize: "2rem", fontWeight: 700 }}>
+                    {studentDetails.totalFinesPaid || 0}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    background: "#f87171",
+                    borderRadius: "10px",
+                    padding: "1.2rem 2.5rem",
+                    minWidth: "180px",
+                    textAlign: "center",
+                    color: "#fff",
+                  }}
+                >
+                  <div style={{ fontSize: "1.2rem", marginBottom: "0.3rem" }}>
+                    Current Fines
+                  </div>
+                  <div style={{ fontSize: "2rem", fontWeight: 700 }}>
+                    ₹{studentDetails.currentFines || 0}
+                  </div>
+                </div>
+              </div>
+              {/* Borrowed Books */}
+              <div style={{ marginBottom: "2rem" }}>
+                <h3 style={{ fontSize: "1.3rem", marginBottom: "0.7rem" }}>
+                  Currently Borrowed Books
+                </h3>
+                <ul
+                  style={{
+                    background: "#232b39",
+                    borderRadius: "8px",
+                    padding: "1rem",
+                    minHeight: "60px",
+                  }}
+                >
+                  {studentDetails.borrowedBooks &&
+                  studentDetails.borrowedBooks.filter((b) => !b.returnedAt)
+                    .length > 0 ? (
+                    studentDetails.borrowedBooks
+                      .filter((b) => !b.returnedAt)
+                      .map((b) => (
+                        <li
+                          key={b.bookId}
+                          style={{
+                            marginBottom: "0.7rem",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                          }}
+                        >
+                          <span>
+                            <b>{b.title}</b> (ISBN: {b.isbn})<br />
+                            Borrowed: {new Date(b.borrowedAt).toLocaleString()}
+                            <br />
+                            Due: {new Date(b.dueAt).toLocaleString()}
+                          </span>
+                          <span
+                            style={{
+                              color: b.fineAccrued > 0 ? "#f87171" : "#4ade80",
+                              fontWeight: 600,
+                            }}
+                          >
+                            Fine: ₹{b.fineAccrued || 0}
+                          </span>
+                        </li>
+                      ))
+                  ) : (
+                    <li>No books currently borrowed.</li>
+                  )}
+                </ul>
+              </div>
+              {/* Returned Books */}
+              <div>
+                <h3 style={{ fontSize: "1.3rem", marginBottom: "0.7rem" }}>
+                  Returned Books
+                </h3>
+                <ul
+                  style={{
+                    background: "#232b39",
+                    borderRadius: "8px",
+                    padding: "1rem",
+                    minHeight: "60px",
+                  }}
+                >
+                  {studentDetails.borrowedBooks &&
+                  studentDetails.borrowedBooks.filter((b) => b.returnedAt)
+                    .length > 0 ? (
+                    studentDetails.borrowedBooks
+                      .filter((b) => b.returnedAt)
+                      .map((b) => (
+                        <li
+                          key={b.bookId}
+                          style={{
+                            marginBottom: "0.7rem",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                          }}
+                        >
+                          <span>
+                            <b>{b.title}</b> (ISBN: {b.isbn})<br />
+                            Borrowed: {new Date(b.borrowedAt).toLocaleString()}
+                            <br />
+                            Returned: {new Date(b.returnedAt).toLocaleString()}
+                          </span>
+                          <span style={{ color: "#4ade80", fontWeight: 600 }}>
+                            Fine Paid: ₹{b.fineAccrued || 0}
+                          </span>
+                        </li>
+                      ))
+                  ) : (
+                    <li>No books returned yet.</li>
+                  )}
+                </ul>
+              </div>
+              {/* Book Lending Dropdown */}
+              <div style={{ width: "100%", marginTop: "1.5rem" }}>
+                <button
+                  onClick={() => setShowBookDropdown((v) => !v)}
+                  style={{
+                    padding: "0.7rem 2rem",
+                    fontSize: "1.1rem",
+                    borderRadius: "8px",
+                    background: "#2563eb",
+                    color: "#fff",
+                    border: "none",
+                    marginBottom: "1rem",
+                  }}
+                >
+                  {showBookDropdown ? "Close Book Lend" : "Lend New Book"}
+                </button>
+                {showBookDropdown && (
+                  <div
+                    style={{
+                      background: "#232b39",
+                      borderRadius: "10px",
+                      padding: "1.5rem",
+                      marginTop: "0.5rem",
+                    }}
+                  >
+                    <input
+                      value={bookDropdownSearch}
+                      onChange={(e) => setBookDropdownSearch(e.target.value)}
+                      placeholder="Search books..."
+                      style={{
+                        width: "60%",
+                        padding: "0.75rem",
+                        fontSize: "1.1rem",
+                        borderRadius: "8px",
+                        border: "1px solid #444",
+                        marginBottom: "1.5rem",
+                        color: "#fff",
+                        background: "#181f2a",
+                      }}
+                    />
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "nowrap",
+                        gap: "1.5rem",
+                        marginBottom: "1.5rem",
+                        minHeight: "320px",
+                        justifyContent: "flex-start",
+                      }}
+                    >
+                      {pagedBooks.length > 0 ? (
+                        pagedBooks.map((book) => (
+                          <div
+                            key={book._id}
+                            style={{
+                              background: "#181f2a",
+                              borderRadius: "12px",
+                              boxShadow: "0 2px 8px rgba(0,0,0,0.18)",
+                              padding: "1.2rem",
+                              minWidth: "240px",
+                              maxWidth: "260px",
+                              width: "260px",
+                              color: "#fff",
+                              display: "flex",
+                              flexDirection: "column",
+                              justifyContent: "space-between",
+                              alignItems: "stretch",
+                              position: "relative",
+                              height: "450px",
+                            }}
+                          >
+                            {book.coverImage && (
+                              <img
+                                src={book.coverImage}
+                                alt={book.title}
+                                style={{
+                                  width: "100%",
+                                  height: "140px",
+                                  objectFit: "cover",
+                                  borderRadius: "8px",
+                                  marginBottom: "0.7rem",
+                                  background: "#232b39",
+                                }}
+                              />
+                            )}
+                            <div
+                              style={{
+                                flex: 1,
+                                display: "flex",
+                                flexDirection: "column",
+                                justifyContent: "flex-start",
+                              }}
+                            >
+                              <h4
+                                style={{
+                                  margin: 0,
+                                  fontSize: "1.13rem",
+                                  fontWeight: 700,
+                                  color: "#fff",
+                                  marginBottom: "0.35rem",
+                                  lineHeight: "1.2",
+                                  textAlign: "left",
+                                  wordBreak: "break-word",
+                                }}
+                              >
+                                {book.title}
+                              </h4>
+                              <p
+                                style={{
+                                  margin: 0,
+                                  fontSize: "1rem",
+                                  color: "#a5b4fc",
+                                  marginBottom: "0.25rem",
+                                  textAlign: "left",
+                                  wordBreak: "break-word",
+                                }}
+                              >
+                                {book.author}
+                              </p>
+                              <p
+                                style={{
+                                  margin: 0,
+                                  fontSize: "0.97rem",
+                                  color: "#cbd5e1",
+                                  textAlign: "left",
+                                  wordBreak: "break-word",
+                                }}
+                              >
+                                ISBN: {book.isbn}
+                              </p>
+                            </div>
+                            <div
+                              style={{
+                                display: "flex",
+                                flex: 1,
+                                flexDirection: "column",
+                                justifyContent: "flex-end",
+                              }}
+                            >
+                              <button
+                                onClick={() => handleLendBookDropdown(book._id)}
+                                style={{
+                                  marginTop: "1.1rem",
+                                  padding: "0.6rem 1.4rem",
+                                  borderRadius: "7px",
+                                  background: "#4ade80",
+                                  color: "#181f2a",
+                                  border: "none",
+                                  fontWeight: 700,
+                                  fontSize: "1.05rem",
+                                  alignSelf: "stretch",
+                                  marginBottom: 0,
+                                }}
+                              >
+                                Lend
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div style={{ color: "#f87171", fontSize: "1.1rem" }}>
+                          No books found.
+                        </div>
+                      )}
+                      {/* Add placeholder cards for alignment if less than 4 books */}
+                      {pagedBooks.length > 0 &&
+                        pagedBooks.length < 4 &&
+                        Array.from({ length: 4 - pagedBooks.length }).map(
+                          (_, i) => (
+                            <div
+                              key={`placeholder-${i}`}
+                              style={{
+                                minWidth: "240px",
+                                maxWidth: "260px",
+                                width: "240px",
+                                background: "transparent",
+                                boxShadow: "none",
+                                height: "400px",
+                              }}
+                            />
+                          )
+                        )}
+                    </div>
+                    {/* Pagination: <, page number, > */}
+                    {totalBookPages > 1 && (
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "0.7rem",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          marginTop: "2.5rem",
+                        }}
+                      >
+                        <button
+                          onClick={() =>
+                            setBookDropdownPage(bookDropdownPage - 1)
+                          }
+                          disabled={bookDropdownPage === 1}
+                          style={{
+                            padding: "0.4rem 1.1rem",
+                            borderRadius: "6px",
+                            background:
+                              bookDropdownPage === 1 ? "#222e3c" : "#2563eb",
+                            color: "#fff",
+                            border: "none",
+                            fontWeight: 600,
+                            fontSize: "1.2rem",
+                            cursor:
+                              bookDropdownPage === 1
+                                ? "not-allowed"
+                                : "pointer",
+                            opacity: bookDropdownPage === 1 ? 0.5 : 1,
+                            display: "flex",
+                            alignItems: "center",
+                            width: "44px",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <span style={{ fontSize: "1.3rem" }}>&lt;</span>
+                        </button>
+                        <span
+                          style={{
+                            fontSize: "1.1rem",
+                            fontWeight: 600,
+                            color: "#fff",
+                            padding: "0.4rem 1.1rem",
+                            background: "#2563eb",
+                            borderRadius: "6px",
+                            width: "44px",
+                            textAlign: "center",
+                            display: "inline-block",
+                          }}
+                        >
+                          {bookDropdownPage}
+                        </span>
+                        <button
+                          onClick={() =>
+                            setBookDropdownPage(bookDropdownPage + 1)
+                          }
+                          disabled={bookDropdownPage === totalBookPages}
+                          style={{
+                            padding: "0.4rem 1.1rem",
+                            borderRadius: "6px",
+                            background:
+                              bookDropdownPage === totalBookPages
+                                ? "#222e3c"
+                                : "#2563eb",
+                            color: "#fff",
+                            border: "none",
+                            fontWeight: 600,
+                            fontSize: "1.2rem",
+                            cursor:
+                              bookDropdownPage === totalBookPages
+                                ? "not-allowed"
+                                : "pointer",
+                            opacity:
+                              bookDropdownPage === totalBookPages ? 0.5 : 1,
+                            display: "flex",
+                            alignItems: "center",
+                            width: "44px",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <span style={{ fontSize: "1.3rem" }}>&gt;</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+      {/* Lend New Book Modal */}
+      {lendBookModalOpen && (
+        <div className="modal">
+          <h2>Select Book to Lend</h2>
+          <input
+            value={bookSearch}
+            onChange={(e) => setBookSearch(e.target.value)}
+            placeholder="Search books..."
+          />
+          <div>
+            {bookResults.map((book) => (
+              <div key={book._id} className="book-card">
+                <h4>{book.title}</h4>
+                <p>{book.author}</p>
+                <p>ISBN: {book.isbn}</p>
+                <button onClick={() => handleLendBook(book._id)}>Lend</button>
+              </div>
+            ))}
+          </div>
+          <button onClick={() => setLendBookModalOpen(false)}>Close</button>
+        </div>
+      )}
     </div>
   );
 };

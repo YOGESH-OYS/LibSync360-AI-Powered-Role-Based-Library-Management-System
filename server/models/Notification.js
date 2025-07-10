@@ -225,6 +225,7 @@ notificationSchema.statics.createNotification = async function (
 ) {
   const notification = new this({
     recipient: notificationData.recipientId,
+    sender: notificationData.senderId, // <-- require senderId
     type: notificationData.type,
     title: notificationData.title,
     message: notificationData.message,

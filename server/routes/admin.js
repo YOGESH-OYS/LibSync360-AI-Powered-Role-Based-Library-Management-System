@@ -117,7 +117,7 @@ router.get("/books", adminAuth, async (req, res) => {
     const processedBooks = books.map((book) => ({
       ...book,
       addedBy: book.addedBy || { firstName: "Unknown", lastName: "User" },
-      availableCopies: book.availableCopies || book.totalCopies || 0,
+      availableCopies: typeof book.availableCopies === 'number' ? book.availableCopies : (book.totalCopies || 0),
       totalCopies: book.totalCopies || 1,
       genre: Array.isArray(book.genre) ? book.genre : [book.genre || "Unknown"],
       coverImage:

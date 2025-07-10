@@ -60,8 +60,10 @@ router.get("/my-fines", authenticateToken, async (req, res) => {
     if (status) query.status = status;
 
     const fines = await Fine.find(query)
-      .populate("borrowing", "book dueDate")
-      .populate("book", "title author isbn")
+      .populate({
+        path: "borrowing",
+        populate: { path: "book", select: "title author isbn" },
+      })
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);

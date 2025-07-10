@@ -108,6 +108,17 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // Add borrowedBooks and currentFines for lending workflow
+    borrowedBooks: [{
+      bookId: { type: mongoose.Schema.Types.ObjectId, ref: 'Book', required: true },
+      title: String,
+      isbn: String,
+      borrowedAt: { type: Date, required: true },
+      dueAt: { type: Date, required: true },
+      returnedAt: { type: Date, default: null },
+      fineAccrued: { type: Number, default: 0 }
+    }],
+    currentFines: { type: Number, default: 0 },
     // Timestamps
     lastLogin: {
       type: Date,

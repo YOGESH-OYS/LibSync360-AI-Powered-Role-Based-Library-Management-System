@@ -530,4 +530,24 @@ router.get("/search/semantic", async (req, res) => {
   }
 });
 
+// Staff: Search/filter available books for lending
+router.get(
+  "/search/available",
+  verifyToken,
+  requireStaff,
+  asyncHandler(async (req, res) => {
+    const { search } = req.query;
+    const query = { isActive: true, availableCopies: { $gt: 0 } };
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { author: { $regex: search, $options: "i" } },
+        { isbn: { $regex: search, $options: "i" } },
+      ];
+    }
+    const books = await Book.find(query).limit(20);
+    res.json(books);
+  })
+);
+
 module.exports = router;
