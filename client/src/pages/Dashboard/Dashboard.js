@@ -24,6 +24,7 @@ import {
   notificationsAPI,
   aiAPI,
   adminAPI,
+  booksAPI,
 } from "../../services/api";
 import { toast } from "react-hot-toast";
 import {
@@ -54,6 +55,16 @@ const Dashboard = () => {
   const [bookDropdownSearch, setBookDropdownSearch] = useState("");
   const [bookDropdownResults, setBookDropdownResults] = useState([]);
   const [bookDropdownPage, setBookDropdownPage] = useState(1);
+
+  // --- Student Dashboard hooks for books and fines ---
+  const [allBooks, setAllBooks] = useState([]);
+  const [fines, setFines] = useState([]);
+  useEffect(() => {
+    if (user.role === "student") {
+      booksAPI.getAll({}).then((res) => setAllBooks(res.data.books || []));
+      finesAPI.getMyFines({}).then((res) => setFines(res.data.fines || []));
+    }
+  }, [user.role]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -646,103 +657,81 @@ const Dashboard = () => {
           </div>
         );
 
-      case "student":
+      case "student": {
+        // --- Student Dashboard: Polished UI ---
+        const currentBorrowedBooks = fines
+          .filter((f) => f.borrowing && f.borrowing.status !== "returned")
+          .map((f) => f.borrowing?.book)
+          .filter(Boolean);
+        let recommended = [];
+        if (allBooks.length > 0) {
+          const shuffled = [...allBooks].sort(() => 0.5 - Math.random());
+          recommended = shuffled.slice(0, 4);
+        }
         return (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="card"
-            >
-              <div className="card-header">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  My Current Borrowings
-                </h3>
-              </div>
-              <div className="card-body">
-                {recentBorrowings.length > 0 ? (
-                  <div className="space-y-3">
-                    {recentBorrowings.map((borrowing) => (
-                      <div
-                        key={borrowing._id}
-                        className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                      >
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-white">
-                            {borrowing.book?.title}
-                          </p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {borrowing.book?.author}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Due:{" "}
-                            {new Date(borrowing.dueDate).toLocaleDateString()}
-                          </p>
-                          {new Date(borrowing.dueDate) < new Date() && (
-                            <p className="text-sm text-red-600 dark:text-red-400">
-                              Overdue
-                            </p>
-                          )}
-                        </div>
+          <div className="container mx-auto px-4 py-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-6">
+              Welcome, {user.firstName}!
+            </h1>
+            {/* My Current Borrowings */}
+            <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <BookOpenIcon className="h-6 w-6 text-blue-500" /> My Current
+                Borrowings
+              </h2>
+              {currentBorrowedBooks.length === 0 ? (
+                <div className="text-gray-500">
+                  You have no books currently borrowed.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {currentBorrowedBooks.map((book, idx) => (
+                    <div
+                      key={book._id || idx}
+                      className="bg-blue-50 rounded-lg p-4 flex flex-col shadow hover:shadow-lg transition"
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <BookOpenIcon className="h-5 w-5 text-blue-400" />
+                        <span className="font-semibold text-gray-900 truncate">
+                          {book.title || "Book"}
+                        </span>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-500 dark:text-gray-400">
-                    No current borrowings
-                  </p>
-                )}
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="card"
-            >
-              <div className="card-header">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Recommended Books
-                </h3>
-              </div>
-              <div className="card-body">
-                {recommendations.length > 0 ? (
-                  <div className="space-y-3">
-                    {recommendations.map((book) => (
-                      <div
-                        key={book._id}
-                        className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg"
-                      >
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-white">
-                            {book.title}
-                          </p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {book.author}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                            <span className="mr-1">★</span>
-                            {book.averageRating?.toFixed(1) || "N/A"}
-                          </div>
-                        </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            {/* Recommended Books (random from all books) */}
+            <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <StarIcon className="h-6 w-6 text-yellow-500" /> Recommended
+                Books
+              </h2>
+              {recommended.length === 0 ? (
+                <div className="text-gray-500">
+                  No recommendations at this time.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {recommended.map((book, idx) => (
+                    <div
+                      key={book._id || idx}
+                      className="bg-yellow-50 rounded-lg p-4 flex flex-col shadow hover:shadow-lg transition"
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <StarIcon className="h-5 w-5 text-yellow-400" />
+                        <span className="font-semibold text-gray-900 truncate">
+                          {book.title || "Book"}
+                        </span>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-500 dark:text-gray-400">
-                    No recommendations available
-                  </p>
-                )}
-              </div>
-            </motion.div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         );
+      }
 
       default:
         return null;
