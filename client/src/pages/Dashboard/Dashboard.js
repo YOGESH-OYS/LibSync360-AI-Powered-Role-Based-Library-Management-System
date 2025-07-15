@@ -361,6 +361,26 @@ const Dashboard = () => {
       });
   };
 
+  const handleBulkReturn = async () => {
+    if (!returnSelectedStudent || selectedReturnBooks.length === 0) return;
+    try {
+      await borrowingsAPI.bulkReturn({
+        studentId: returnSelectedStudent._id,
+        bookIds: selectedReturnBooks,
+      });
+      toast.success("Books returned successfully");
+      // Refresh student details
+      axios
+        .get(`/users/${returnSelectedStudent._id}`)
+        .then((res) => setReturnStudentDetails(res.data));
+      setShowReturnForm(false);
+      setSelectedReturnBooks([]);
+      setReturnModalOpen(false);
+    } catch (e) {
+      toast.error("Failed to return books");
+    }
+  };
+
   const getRoleSpecificContent = () => {
     switch (user.role) {
       case "admin":
@@ -1883,7 +1903,6 @@ const Dashboard = () => {
                           <div className="text-gray-500 text-sm">
                             ISBN: {b.isbn} Fine: ₹{b.fineAccrued || 0}
                           </div>
-                      
                         </div>
                         <input
                           type="checkbox"
@@ -1930,7 +1949,7 @@ const Dashboard = () => {
                   type="button"
                   className="px-6 py-2 rounded bg-green-500 text-white font-semibold hover:bg-green-600 transition"
                   disabled={selectedReturnBooks.length === 0}
-                  // TODO: Add return logic here
+                  onClick={handleBulkReturn}
                 >
                   Return
                 </button>

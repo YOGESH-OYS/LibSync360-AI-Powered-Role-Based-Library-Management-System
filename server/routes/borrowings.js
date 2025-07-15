@@ -198,34 +198,159 @@ router.post(
 );
 
 // @route   POST /api/borrowings/return
-// @desc    Return a borrowed book (Staff only)
+// @desc    Return multiple borrowed books (Staff only)
 // @access  Private (Staff/Admin)
 router.post(
   "/return",
   verifyToken,
   requireStaff,
   asyncHandler(async (req, res) => {
-    const { studentId, bookId } = req.body;
+    const { studentId, bookIds } = req.body;
+    if (!studentId || !Array.isArray(bookIds) || bookIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "studentId and bookIds[] are required",
+      });
+    }
     const student = await User.findById(studentId);
     if (!student)
       return res
         .status(404)
         .json({ success: false, message: "Student not found" });
-    const borrowed = student.borrowedBooks.find(
-      (b) => b.bookId.equals(bookId) && !b.returnedAt
-    );
-    if (!borrowed)
-      return res
-        .status(400)
-        .json({ success: false, message: "Book not borrowed" });
-    borrowed.returnedAt = new Date();
-    await student.save();
-    const book = await Book.findById(bookId);
-    if (book) {
-      book.availableCopies += 1;
-      await book.save();
+
+    let totalFine = 0;
+    let returnedBooks = [];
+    let fineDetails = [];
+    let errors = [];
+    const admin = await User.findOne({ role: "admin" });
+    const now = new Date();
+
+    for (const bookId of bookIds) {
+      // Find borrowing record
+      const borrowing = await Borrowing.findOne({
+        student: studentId,
+        book: bookId,
+        status: { $in: ["borrowed", "overdue"] },
+      });
+      if (!borrowing) {
+        errors.push({ bookId, error: "No active borrowing found" });
+        continue;
+      }
+      // Mark as returned
+      await borrowing.returnBook({ staffId: req.user.id });
+      // Update student's borrowedBooks array
+      const borrowed = student.borrowedBooks.find(
+        (b) => b.bookId.equals(bookId) && !b.returnedAt
+      );
+      let fineAccrued = 0;
+      if (borrowed) {
+        borrowed.returnedAt = now;
+        fineAccrued = borrowed.fineAccrued || 0;
+      }
+      // Update book availability
+      const book = await Book.findById(bookId);
+      if (book) {
+        book.availableCopies += 1;
+        await book.save();
+      }
+      // Calculate fine if overdue
+      let fineAmount = borrowing.calculatedFine || 0;
+      if (fineAmount > 0) {
+        // Create Fine record
+        const fine = await Fine.create({
+          student: studentId,
+          borrowing: borrowing._id,
+          amount: fineAmount,
+          reason: "overdue",
+          description: `Overdue return for book: ${book ? book.title : bookId}`,
+        });
+        fineDetails.push({ bookId, fineId: fine._id, amount: fineAmount });
+        totalFine += fineAmount;
+      }
+      returnedBooks.push({
+        bookId,
+        title: book ? book.title : undefined,
+        isbn: book ? book.isbn : undefined,
+        fine: fineAccrued,
+        returnedAt: now,
+      });
     }
-    res.json({ success: true, message: "Book returned successfully" });
+    await student.save();
+
+    // Send notification to student (no fine amount)
+    try {
+      await Notification.createNotification({
+        recipientId: studentId,
+        senderId: req.user.id,
+        type: "return",
+        title: "Books Returned Successfully",
+        message: `You have returned the following books: ${returnedBooks
+          .map((b) => `${b.title} (ISBN: ${b.isbn})`)
+          .join(", ")} on ${now.toLocaleString()}.`,
+        priority: "medium",
+        metadata: {
+          books: JSON.stringify(
+            returnedBooks.map((b) => ({
+              title: b.title,
+              isbn: b.isbn,
+              returnedAt: b.returnedAt,
+            }))
+          ),
+          timestamp: now.toISOString(),
+        },
+      });
+    } catch (e) {
+      // log but don't fail
+    }
+
+    // Always send admin notification
+    if (admin) {
+      try {
+        const isFine = totalFine > 0;
+        await Notification.createNotification({
+          recipientId: admin._id,
+          senderId: req.user.id,
+          type: isFine ? "fine" : "return",
+          title: isFine
+            ? `Fine Alert: ${student.firstName} ${student.lastName}`
+            : `Return Alert: ${student.firstName} ${student.lastName}`,
+          message: `Student ${student.firstName} ${student.lastName} (Reg: ${
+            student.registrationNumber
+          }) returned the following books: ${returnedBooks
+            .map(
+              (b) =>
+                `${b.title} (ISBN: ${b.isbn})${
+                  b.fine && b.fine > 0 ? ` [Fine: ₹${b.fine}]` : ""
+                }`
+            )
+            .join(", ")} on ${now.toLocaleString()}.${
+            isFine ? ` Total fine: ₹${totalFine}.` : ""
+          }`,
+          priority: isFine ? "high" : "medium",
+          metadata: {
+            studentId: student._id.toString(),
+            studentName: `${student.firstName} ${student.lastName}`,
+            registrationNumber: student.registrationNumber,
+            department: student.academicCredentials?.department || "",
+            year: student.academicCredentials?.year || "",
+            books: JSON.stringify(returnedBooks), // Each book: {title, isbn, fine, returnedAt}
+            totalFine: totalFine.toString(),
+            fineDetails: JSON.stringify(fineDetails),
+            timestamp: now.toISOString(),
+            ...(isFine ? { action: "take_action_required" } : {}),
+          },
+        });
+      } catch (e) {
+        // log but don't fail
+      }
+    }
+
+    res.json({
+      success: true,
+      returnedBooks,
+      totalFine,
+      errors,
+    });
   })
 );
 

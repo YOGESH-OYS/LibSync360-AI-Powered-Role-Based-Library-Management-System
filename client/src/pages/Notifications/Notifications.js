@@ -208,6 +208,25 @@ const Notifications = () => {
     }
   };
 
+  const handleTakeAction = async (notification) => {
+    if (!notification) return;
+
+    try {
+      await notificationsAPI.adminTakeAction({
+        notificationId: notification._id,
+        action: "take_action_required", // Assuming 'take_action_required' is the action
+      });
+      toast.success("Action taken successfully!");
+      fetchNotifications();
+      // Refresh unread count after taking action
+      setTimeout(() => {
+        fetchUnreadCount();
+      }, 1000);
+    } catch (err) {
+      toast.error("Failed to take action on notification.");
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold text-gray-900 mb-4">Notifications</h1>
@@ -405,8 +424,7 @@ const Notifications = () => {
       ) : (
         <ul className="space-y-4">
           {filtered.map((n) => {
-            console.log("Notification object:", n);
-            // Robustly access sender role
+            // Sender role and icon
             const senderRole =
               n.sender?.role ||
               (Array.isArray(n.sender) && n.sender[0]?.role) ||
@@ -416,18 +434,6 @@ const Notifications = () => {
                   n.sender.lastName || n.sender[0]?.lastName || ""
                 }`.trim()
               : "System";
-
-            // Handle recipient info for sent notifications
-            const recipientInfo = n.recipients
-              ? `Sent to ${n.recipientCount || n.recipients.length} recipient${
-                  n.recipientCount > 1 ? "s" : ""
-                }`
-              : n.recipient
-              ? `To: ${n.recipient.firstName || ""} ${
-                  n.recipient.lastName || ""
-                }`.trim()
-              : "";
-
             const iconBg =
               senderRole === "admin"
                 ? "bg-red-100"
@@ -440,7 +446,15 @@ const Notifications = () => {
             return (
               <li
                 key={n._id}
-                className="bg-white rounded-lg shadow-sm border p-4 flex items-start gap-4 relative"
+                className={`bg-white rounded-lg shadow-sm border p-4 flex items-start gap-4 relative ${
+                  n.type === "fine" &&
+                  n.metadata?.action === "take_action_required"
+                    ? "border-red-600 bg-red-50"
+                    : (n.type === "fine" || n.type === "return") &&
+                      n.metadata?.books
+                    ? "border-blue-600 bg-blue-50"
+                    : "border-blue-200"
+                }`}
               >
                 {/* Profile Icon */}
                 <div className={`flex flex-col items-center mr-2`}>
@@ -496,9 +510,6 @@ const Notifications = () => {
                         <span className="font-medium text-gray-700">
                           {senderName}
                         </span>
-                        <span className="ml-2 text-blue-600">
-                          ({recipientInfo})
-                        </span>
                       </>
                     ) : (
                       // Received notification
@@ -510,13 +521,101 @@ const Notifications = () => {
                       </>
                     )}
                   </div>
+                  {/* Collapsible Body */}
                   <div
-                    className={`text-gray-700 mb-1 transition-all duration-300 overflow-hidden ${
-                      isOpen ? "max-h-40 opacity-100" : "max-h-0 opacity-0"
+                    className={`transition-all duration-300 overflow-hidden ${
+                      isOpen
+                        ? "max-h-[1000px] opacity-100 mt-2"
+                        : "max-h-0 opacity-0"
                     }`}
                     style={{ minHeight: isOpen ? "2rem" : 0 }}
                   >
-                    {n.message}
+                    {(n.type === "fine" || n.type === "return") &&
+                    n.metadata?.books ? (
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap gap-8 mb-2">
+                          <div>
+                            <div className="text-gray-800 font-medium">
+                              Student Details
+                            </div>
+                            <div className="ml-2 text-gray-700 text-sm">
+                              <div>
+                                <span className="font-semibold">Name:</span>{" "}
+                                {n.metadata.studentName}
+                              </div>
+                              <div>
+                                <span className="font-semibold">
+                                  Reg Number:
+                                </span>{" "}
+                                {n.metadata.registrationNumber}
+                              </div>
+                              {n.metadata.department && (
+                                <div>
+                                  <span className="font-semibold">
+                                    Department:
+                                  </span>{" "}
+                                  {n.metadata.department}
+                                </div>
+                              )}
+                              {n.metadata.year && (
+                                <div>
+                                  <span className="font-semibold">Year:</span>{" "}
+                                  {n.metadata.year}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-gray-800 font-medium">
+                              Returned At
+                            </div>
+                            <div className="ml-2 text-gray-700 text-sm">
+                              {n.metadata.timestamp
+                                ? new Date(
+                                    n.metadata.timestamp
+                                  ).toLocaleString()
+                                : ""}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-gray-800 font-medium mt-2">
+                          Books Returned
+                        </div>
+                        <ul className="ml-4 list-disc text-gray-700 text-sm">
+                          {JSON.parse(n.metadata.books || "[]").map((b, i) => (
+                            <li key={i} className="flex items-center gap-2">
+                              <span className="font-semibold">{b.title}</span>
+                              <span className="text-gray-500">
+                                (ISBN: {b.isbn})
+                              </span>
+                              {b.fine && Number(b.fine) > 0 && (
+                                <span className="ml-2 text-red-600 font-semibold">
+                                  Fine: ₹{b.fine}
+                                </span>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                        {n.metadata.totalFine &&
+                          Number(n.metadata.totalFine) > 0 && (
+                            <div className="mt-2 text-xl font-bold text-red-600">
+                              Total Fine: ₹{n.metadata.totalFine}
+                            </div>
+                          )}
+                        {user.role === "admin" &&
+                          n.type === "fine" &&
+                          n.metadata?.action === "take_action_required" && (
+                            <button
+                              className="bg-red-600 text-white px-4 py-2 rounded mt-2 md:mt-0 md:ml-4"
+                              onClick={() => handleTakeAction(n)}
+                            >
+                              Take Action
+                            </button>
+                          )}
+                      </div>
+                    ) : (
+                      <div className="text-gray-700 mb-1">{n.message}</div>
+                    )}
                   </div>
                 </div>
               </li>

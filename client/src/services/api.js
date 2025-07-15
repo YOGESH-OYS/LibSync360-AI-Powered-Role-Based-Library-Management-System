@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  baseURL: process.env.REACT_APP_API_URL || "http://localhost:5000/api",
   //http://IPv4:5000/api
   timeout: 20000,
   headers: {
@@ -88,6 +88,8 @@ export const borrowingsAPI = {
   markLost: (id) => api.put(`/borrowings/${id}/lost`),
   getHistory: (params) => api.get("/borrowings/history", { params }),
   getOverdue: (params) => api.get("/borrowings/overdue", { params }),
+  // Bulk return endpoint
+  bulkReturn: (data) => api.post("/borrowings/return", data),
 };
 
 // Fines API
