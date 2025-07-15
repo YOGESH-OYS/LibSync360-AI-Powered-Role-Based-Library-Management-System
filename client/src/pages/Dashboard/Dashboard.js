@@ -68,6 +68,30 @@ const Dashboard = () => {
     useState(null);
   const [returnSelectedBookId, setReturnSelectedBookId] = useState("");
 
+  // Add state for return form visibility, selected books, and damage
+  const [showReturnForm, setShowReturnForm] = useState(false);
+  const [selectedReturnBooks, setSelectedReturnBooks] = useState([]);
+  const [damageLevel, setDamageLevel] = useState("none");
+
+  // Add state for search trigger in the return form
+  const [showBookSearch, setShowBookSearch] = useState(false);
+
+  // Add state for book search input in the return form
+  const [bookSearchInput, setBookSearchInput] = useState("");
+
+  // Helper to get fine for a bookId
+  const getFineForBook = (bookId) => {
+    if (!returnStudentDetails || !returnStudentDetails.borrowedBooks) return 0;
+    const b = returnStudentDetails.borrowedBooks.find(
+      (bk) => bk.bookId === bookId
+    );
+    return b ? b.fineAccrued || 0 : 0;
+  };
+  const totalFine = selectedReturnBooks.reduce(
+    (sum, bookId) => sum + getFineForBook(bookId),
+    0
+  );
+
   // --- Student Dashboard hooks for books and fines ---
   const [allBooks, setAllBooks] = useState([]);
   const [fines, setFines] = useState([]);
@@ -1570,6 +1594,24 @@ const Dashboard = () => {
             color: "#fff",
           }}
         >
+          {/* Close button top right */}
+          <button
+            onClick={() => setReturnModalOpen(false)}
+            style={{
+              position: "absolute",
+              top: 24,
+              right: 32,
+              background: "transparent",
+              color: "#fff",
+              fontSize: "2rem",
+              border: "none",
+              cursor: "pointer",
+              zIndex: 10,
+            }}
+            aria-label="Close"
+          >
+            &times;
+          </button>
           <h2 style={{ fontSize: "2rem", marginBottom: "1rem", color: "#fff" }}>
             Process Book Return
           </h2>
@@ -1652,170 +1694,249 @@ const Dashboard = () => {
             </>
           )}
           {/* Student Profile and Borrowed Books Dropdown */}
-          {returnSelectedStudent && (
+          {returnSelectedStudent && returnStudentDetails && !showReturnForm && (
             <>
-              {returnStudentDetailsLoading ? (
-                <div
-                  style={{
-                    textAlign: "center",
-                    width: "100%",
-                    marginTop: "2rem",
-                    fontSize: "1.5rem",
-                  }}
-                >
-                  Loading student details...
-                </div>
-              ) : returnStudentDetailsError ? (
-                <div
-                  style={{
-                    color: "#f87171",
-                    textAlign: "center",
-                    width: "100%",
-                    marginTop: "2rem",
-                    fontSize: "1.2rem",
-                  }}
-                >
-                  {returnStudentDetailsError}
-                </div>
-              ) : returnStudentDetails ? (
-                <>
-                  <div style={{ width: "100%", marginBottom: "1.5rem" }}>
-                    <h3 style={{ fontSize: "1.3rem", marginBottom: "0.7rem" }}>
+              <div className="w-full max-w-xl mx-auto mb-6">
+                <div className="bg-white rounded-lg shadow flex flex-col p-6 border-l-4 border-blue-500">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-2xl font-bold text-gray-900">
                       {returnStudentDetails.firstName}{" "}
-                      {returnStudentDetails.lastName} (
+                      {returnStudentDetails.lastName}
+                    </h3>
+                    <span
+                      className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                        returnStudentDetails.isActive
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
+                    >
+                      {returnStudentDetails.isActive ? "Active" : "Inactive"}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-4 mb-2 text-gray-700">
+                    <div>
+                      <span className="font-semibold">Reg#:</span>{" "}
                       {returnStudentDetails.registrationNumber ||
                         returnStudentDetails.rollNumber}
-                      )
-                    </h3>
-                    <div style={{ marginBottom: "0.5rem" }}>
-                      <span style={{ marginRight: "1.5rem" }}>
-                        Year:{" "}
-                        <b>
-                          {returnStudentDetails.academicCredentials?.year ||
-                            "-"}
-                        </b>
-                      </span>
-                      <span style={{ marginRight: "1.5rem" }}>
-                        Dept:{" "}
-                        <b>
-                          {returnStudentDetails.academicCredentials
-                            ?.department || "-"}
-                        </b>
-                      </span>
-                      <span>
-                        Status:{" "}
-                        <b
-                          style={{
-                            color: returnStudentDetails.isActive
-                              ? "#4ade80"
-                              : "#f87171",
-                          }}
-                        >
-                          {returnStudentDetails.isActive
-                            ? "🟢 Active"
-                            : "🔴 Inactive"}
-                        </b>
-                      </span>
                     </div>
-                    <div style={{ marginBottom: "0.5rem" }}>
-                      <span style={{ marginRight: "1.5rem" }}>
-                        Email: <b>{returnStudentDetails.email}</b>
-                      </span>
-                      <span>
-                        Phone: <b>{returnStudentDetails.phone || "-"}</b>
-                      </span>
+                    <div>
+                      <span className="font-semibold">Year:</span>{" "}
+                      {returnStudentDetails.academicCredentials?.year || "-"}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Dept:</span>{" "}
+                      {returnStudentDetails.academicCredentials?.department ||
+                        "-"}
                     </div>
                   </div>
-                  {/* Dropdown of currently borrowed books */}
-                  <div style={{ width: "100%", marginBottom: "1.5rem" }}>
-                    <label
-                      htmlFor="return-book-dropdown"
-                      style={{
-                        fontWeight: 600,
-                        marginBottom: "0.5rem",
-                        display: "block",
-                      }}
-                    >
-                      Select Book to Return
-                    </label>
-                    <select
-                      id="return-book-dropdown"
-                      value={returnSelectedBookId}
-                      onChange={(e) => setReturnSelectedBookId(e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "0.75rem",
-                        fontSize: "1.1rem",
-                        borderRadius: "8px",
-                        border: "1px solid #444",
-                        marginBottom: "1rem",
-                        color: "#222e3c",
-                        background: "#fff",
-                      }}
-                    >
-                      <option value="">Select a book</option>
-                      {returnStudentDetails.borrowedBooks &&
-                        returnStudentDetails.borrowedBooks
-                          .filter((b) => !b.returnedAt)
-                          .map((b) => (
-                            <option key={b.bookId} value={b.bookId}>
-                              {b.title} (ISBN: {b.isbn}) - Fine: ₹
-                              {b.fineAccrued || 0}
-                            </option>
-                          ))}
-                    </select>
+                  <div className="flex flex-wrap gap-4 mb-2 text-gray-700">
+                    <div>
+                      <span className="font-semibold">Email:</span>{" "}
+                      {returnStudentDetails.email}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Phone:</span>{" "}
+                      {returnStudentDetails.phone || "-"}
+                    </div>
                   </div>
-                  <button
-                    style={{
-                      padding: "0.75rem 2rem",
-                      fontSize: "1.1rem",
-                      borderRadius: "8px",
-                      background: "#4ade80",
-                      color: "#181f2a",
-                      border: "none",
-                      fontWeight: 700,
-                      marginBottom: "1rem",
-                    }}
-                    // TODO: Add return logic here
-                  >
-                    Return
-                  </button>
-                  <button
-                    onClick={() => {
-                      setReturnSelectedStudent(null);
-                      setReturnStudentDetails(null);
-                      setReturnSelectedBookId("");
-                    }}
-                    style={{
-                      marginTop: 0,
-                      padding: "0.75rem 2rem",
-                      fontSize: "1.1rem",
-                      borderRadius: "8px",
-                      background: "#222e3c",
-                      color: "#fff",
-                      border: "none",
-                    }}
-                  >
-                    Back
-                  </button>
-                </>
-              ) : null}
+                </div>
+              </div>
+              <div className="flex justify-center gap-4 mt-6">
+                <button
+                  className="px-6 py-2 rounded bg-green-500 text-white font-semibold hover:bg-green-600 transition"
+                  onClick={() => setShowReturnForm(true)}
+                >
+                  Return Book
+                </button>
+                <button
+                  onClick={() => {
+                    setReturnSelectedStudent(null);
+                    setReturnStudentDetails(null);
+                    setReturnSelectedBookId("");
+                  }}
+                  className="px-6 py-2 rounded bg-gray-500 text-white font-semibold hover:bg-gray-600 transition"
+                >
+                  Back
+                </button>
+              </div>
             </>
           )}
-          <button
-            onClick={() => setReturnModalOpen(false)}
-            style={{
-              marginTop: "auto",
-              padding: "0.75rem 2rem",
-              fontSize: "1.1rem",
-              borderRadius: "8px",
-              background: "#222e3c",
-              color: "#fff",
-              border: "none",
-            }}
-          >
-            Close
-          </button>
+          {/* Return Form */}
+          {showReturnForm && returnSelectedStudent && returnStudentDetails && (
+            <div className="flex flex-col h-full w-full max-w-lg mx-auto relative pb-24">
+              {/* Pre-filled student info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-1">
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    value={`${returnStudentDetails.firstName} ${returnStudentDetails.lastName}`}
+                    readOnly
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-900"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-1">
+                    Department
+                  </label>
+                  <input
+                    type="text"
+                    value={
+                      returnStudentDetails.academicCredentials?.department || ""
+                    }
+                    readOnly
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-900"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-1">
+                    Reg Number
+                  </label>
+                  <input
+                    type="text"
+                    value={
+                      returnStudentDetails.registrationNumber ||
+                      returnStudentDetails.rollNumber ||
+                      ""
+                    }
+                    readOnly
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-900"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 font-semibold mb-1">
+                    Year
+                  </label>
+                  <input
+                    type="text"
+                    value={returnStudentDetails.academicCredentials?.year || ""}
+                    readOnly
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-900"
+                  />
+                </div>
+              </div>
+              {/* Book search bar */}
+              <div className="mb-2">
+                <label className="block font-semibold mb-1 text-gray-700">
+                  Search Book (by name or ISBN)
+                </label>
+                <input
+                  type="text"
+                  value={bookSearchInput}
+                  onChange={(e) => setBookSearchInput(e.target.value)}
+                  placeholder="Type book name or ISBN..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                />
+              </div>
+              {/* Book selection cards (scrollable only) */}
+              <div className="font-semibold text-gray-600 mb-2">
+                Select Books to Return
+              </div>
+              <div className="space-y-3 mb-4 max-h-56 overflow-auto pr-2 w-full bg-transparent">
+                {returnStudentDetails.borrowedBooks &&
+                  returnStudentDetails.borrowedBooks.filter(
+                    (b) =>
+                      !b.returnedAt &&
+                      (!bookSearchInput ||
+                        b.title
+                          .toLowerCase()
+                          .includes(bookSearchInput.toLowerCase()) ||
+                        (b.isbn &&
+                          b.isbn
+                            .toLowerCase()
+                            .includes(bookSearchInput.toLowerCase())))
+                  ).length === 0 && (
+                    <div className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-200 w-full min-h-[64px] flex items-center justify-center text-gray-500">
+                      No books found.
+                    </div>
+                  )}
+                {returnStudentDetails.borrowedBooks &&
+                  returnStudentDetails.borrowedBooks
+                    .filter(
+                      (b) =>
+                        !b.returnedAt &&
+                        (!bookSearchInput ||
+                          b.title
+                            .toLowerCase()
+                            .includes(bookSearchInput.toLowerCase()) ||
+                          (b.isbn &&
+                            b.isbn
+                              .toLowerCase()
+                              .includes(bookSearchInput.toLowerCase())))
+                    )
+                    .map((b) => (
+                      <label
+                        key={b.bookId}
+                        className={`flex items-center justify-between bg-white rounded-lg shadow p-4 border-l-4 cursor-pointer transition-all w-full ${
+                          selectedReturnBooks.includes(b.bookId)
+                            ? "border-blue-600 ring-2 ring-blue-200"
+                            : "border-blue-200 hover:border-blue-400"
+                        }`}
+                        style={{ userSelect: "none" }}
+                      >
+                        <div>
+                          <div className="font-semibold text-gray-900 text-lg">
+                            {b.title}
+                          </div>
+                          <div className="text-gray-500 text-sm">
+                            ISBN: {b.isbn} Fine: ₹{b.fineAccrued || 0}
+                          </div>
+                      
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={selectedReturnBooks.includes(b.bookId)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedReturnBooks([
+                                ...selectedReturnBooks,
+                                b.bookId,
+                              ]);
+                            } else {
+                              setSelectedReturnBooks(
+                                selectedReturnBooks.filter(
+                                  (id) => id !== b.bookId
+                                )
+                              );
+                            }
+                          }}
+                          className="form-checkbox h-5 w-5 text-blue-600"
+                        />
+                      </label>
+                    ))}
+              </div>
+              {/* Total Fine as large, bold value */}
+              <div className="flex items-center justify-end mb-2">
+                <span className="text-2xl font-bold text-green-600">
+                  ₹{totalFine}
+                </span>
+              </div>
+              <hr className="border-t border-gray-300 mb-4" />
+              {/* Fixed bottom right buttons */}
+              <div
+                style={{ position: "fixed", right: 64, bottom: 48, zIndex: 20 }}
+                className="flex gap-4"
+              >
+                <button
+                  type="button"
+                  onClick={() => setShowReturnForm(false)}
+                  className="px-6 py-2 rounded bg-gray-500 text-white font-semibold hover:bg-gray-600 transition"
+                >
+                  Back
+                </button>
+                <button
+                  type="button"
+                  className="px-6 py-2 rounded bg-green-500 text-white font-semibold hover:bg-green-600 transition"
+                  disabled={selectedReturnBooks.length === 0}
+                  // TODO: Add return logic here
+                >
+                  Return
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
