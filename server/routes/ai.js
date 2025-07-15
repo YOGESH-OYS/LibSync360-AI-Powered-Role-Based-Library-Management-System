@@ -42,13 +42,15 @@ router.get("/search", async (req, res) => {
 // Get personalized book recommendations
 router.get("/recommendations", authenticateToken, async (req, res) => {
   try {
-    const { limit = 10, type = "general" } = req.query;
-
-    const recommendations = await getBookRecommendations(req.user.id, {
-      limit: parseInt(limit),
-      type,
-    });
-
+    const { limit = 5 } = req.query;
+    // Return random books from the database
+    const count = await Book.countDocuments({ isActive: true, availableCopies: { $gt: 0 } });
+    const random = Math.max(0, Math.floor(Math.random() * Math.max(1, count - limit)));
+    const recommendations = await Book.find({ isActive: true, availableCopies: { $gt: 0 } })
+      .skip(random)
+      .limit(parseInt(limit))
+      .select("title author coverImage isbn averageRating totalRatings availableCopies totalCopies")
+      .populate("addedBy", "firstName lastName");
     res.json(recommendations);
   } catch (error) {
     logger.error("Error getting recommendations:", error);

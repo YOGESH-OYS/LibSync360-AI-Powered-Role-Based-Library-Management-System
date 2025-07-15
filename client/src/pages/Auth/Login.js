@@ -269,7 +269,7 @@ const Login = () => {
         </motion.form>
 
         {/* Admin Credentials Info */}
-        <motion.div
+        {/* <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8 }}
@@ -280,7 +280,7 @@ const Login = () => {
             <strong>Username:</strong> LIB01<br />
             <strong>Password:</strong> 123@321
           </p>
-        </motion.div>
+        </motion.div> */}
       </motion.div>
     </div>
   );

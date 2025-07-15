@@ -55,6 +55,18 @@ const Dashboard = () => {
   const [bookDropdownSearch, setBookDropdownSearch] = useState("");
   const [bookDropdownResults, setBookDropdownResults] = useState([]);
   const [bookDropdownPage, setBookDropdownPage] = useState(1);
+  const [returnModalOpen, setReturnModalOpen] = useState(false);
+
+  // --- Return Modal State ---
+  const [returnStudentSearch, setReturnStudentSearch] = useState("");
+  const [returnStudentResults, setReturnStudentResults] = useState([]);
+  const [returnSelectedStudent, setReturnSelectedStudent] = useState(null);
+  const [returnStudentDetails, setReturnStudentDetails] = useState(null);
+  const [returnStudentDetailsLoading, setReturnStudentDetailsLoading] =
+    useState(false);
+  const [returnStudentDetailsError, setReturnStudentDetailsError] =
+    useState(null);
+  const [returnSelectedBookId, setReturnSelectedBookId] = useState("");
 
   // --- Student Dashboard hooks for books and fines ---
   const [allBooks, setAllBooks] = useState([]);
@@ -171,7 +183,8 @@ const Dashboard = () => {
         if (isSessionExpiredError(error)) {
           return;
         }
-        toast.error("Failed to load dashboard data");
+        // Only show error for dashboard data, not for recommendations
+        // toast.error("Failed to load dashboard data");
       } finally {
         setLoading(false);
       }
@@ -288,6 +301,39 @@ const Dashboard = () => {
         axios
           .get(`/users/${selectedStudent._id}`)
           .then((res) => setStudentDetails(res.data));
+      });
+  };
+
+  useEffect(() => {
+    if (returnModalOpen && returnStudentSearch.length > 0) {
+      axios
+        .get(
+          `/users/students/search?search=${encodeURIComponent(
+            returnStudentSearch
+          )}`
+        )
+        .then((res) => setReturnStudentResults(res.data))
+        .catch(() => setReturnStudentResults([]));
+    } else if (returnModalOpen) {
+      setReturnStudentResults([]);
+    }
+  }, [returnStudentSearch, returnModalOpen]);
+
+  const handleReturnSelectStudent = (student) => {
+    setReturnSelectedStudent(student);
+    setReturnStudentDetails(null);
+    setReturnStudentDetailsLoading(true);
+    setReturnStudentDetailsError(null);
+    axios
+      .get(`/users/${student._id}`)
+      .then((res) => {
+        setReturnStudentDetails(res.data);
+        setReturnStudentDetailsLoading(false);
+      })
+      .catch(() => {
+        setReturnStudentDetails(null);
+        setReturnStudentDetailsLoading(false);
+        setReturnStudentDetailsError("Failed to load student details.");
       });
   };
 
@@ -639,7 +685,10 @@ const Dashboard = () => {
                     <BookOpenIcon className="mr-2 h-4 w-4" />
                     Lend Book
                   </button>
-                  <button className="btn-secondary">
+                  <button
+                    className="btn-secondary"
+                    onClick={() => setReturnModalOpen(true)}
+                  >
                     <ClockIcon className="mr-2 h-4 w-4" />
                     Process Return
                   </button>
@@ -785,20 +834,21 @@ const Dashboard = () => {
                 Welcome back, {user.firstName}!
               </h1>
               <p className="text-blue-100">
-                {user.department} •{" "}
+                {user.role === "student"
+                  ? `${user.academicCredentials.department}`
+                  : ""}{" "}
+                •{" "}
                 {user.role === "admin"
                   ? "Administrator"
                   : user.role === "staff"
                   ? "Library Staff"
-                  : `Year ${user.year}`}{" "}
-                • {user.registrationNumber}
+                  : `Year ${user.academicCredentials.year}`}
+                {"     "}• {user.registrationNumber}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-blue-100">Reading Streak</p>
-              <p className="text-3xl font-bold">
-                {stats.readingStreak || 0} days
-              </p>
+              <p className="text-blue-100">E-mail</p>
+              <p className="text-3xl font-bold">{user.email}</p>
             </div>
           </div>
         </div>
@@ -1497,6 +1547,275 @@ const Dashboard = () => {
             ))}
           </div>
           <button onClick={() => setLendBookModalOpen(false)}>Close</button>
+        </div>
+      )}
+      {/* Process Return Modal */}
+      {returnModalOpen && (
+        <div
+          style={{
+            position: "fixed",
+            top: "0.5cm",
+            left: "0.5cm",
+            right: "0.5cm",
+            bottom: "0.5cm",
+            background: "var(--modal-bg, #181f2a)",
+            zIndex: 1000,
+            borderRadius: "16px",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
+            padding: "2rem",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            color: "#fff",
+          }}
+        >
+          <h2 style={{ fontSize: "2rem", marginBottom: "1rem", color: "#fff" }}>
+            Process Book Return
+          </h2>
+          {/* Student Search */}
+          {!returnSelectedStudent && (
+            <>
+              <input
+                value={returnStudentSearch}
+                onChange={(e) => setReturnStudentSearch(e.target.value)}
+                placeholder="Search students..."
+                style={{
+                  width: "60%",
+                  padding: "0.75rem",
+                  fontSize: "1.1rem",
+                  borderRadius: "8px",
+                  border: "1px solid #444",
+                  marginBottom: "1.5rem",
+                  color: "#fff",
+                  background: "#222e3c",
+                }}
+              />
+              <ul
+                style={{
+                  width: "60%",
+                  maxHeight: "300px",
+                  overflowY: "auto",
+                  marginBottom: "2rem",
+                }}
+              >
+                {returnStudentResults.map((stu) => (
+                  <li
+                    key={stu._id}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "0.75rem",
+                      borderBottom: "1px solid #333",
+                      cursor: "pointer",
+                      color: "#fff",
+                    }}
+                    onClick={() => handleReturnSelectStudent(stu)}
+                  >
+                    <span>
+                      {stu.firstName} {stu.lastName} (
+                      {stu.registrationNumber || stu.rollNumber})
+                    </span>
+                    <span
+                      style={{
+                        display: "flex",
+                        gap: "1.5rem",
+                        alignItems: "center",
+                        fontSize: "0.95rem",
+                      }}
+                    >
+                      <span title="Books currently borrowed">
+                        📚 {stu.borrowedBooks ? stu.borrowedBooks.length : 0}
+                      </span>
+                      <span title="Year">
+                        {stu.academicCredentials?.year
+                          ? `Year ${stu.academicCredentials.year}`
+                          : ""}
+                      </span>
+                      <span title="Department">
+                        {stu.academicCredentials?.department || ""}
+                      </span>
+                      <span
+                        title="Status"
+                        style={{
+                          color: stu.isActive ? "#4ade80" : "#f87171",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {stu.isActive ? "🟢 Active" : "🔴 Inactive"}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          {/* Student Profile and Borrowed Books Dropdown */}
+          {returnSelectedStudent && (
+            <>
+              {returnStudentDetailsLoading ? (
+                <div
+                  style={{
+                    textAlign: "center",
+                    width: "100%",
+                    marginTop: "2rem",
+                    fontSize: "1.5rem",
+                  }}
+                >
+                  Loading student details...
+                </div>
+              ) : returnStudentDetailsError ? (
+                <div
+                  style={{
+                    color: "#f87171",
+                    textAlign: "center",
+                    width: "100%",
+                    marginTop: "2rem",
+                    fontSize: "1.2rem",
+                  }}
+                >
+                  {returnStudentDetailsError}
+                </div>
+              ) : returnStudentDetails ? (
+                <>
+                  <div style={{ width: "100%", marginBottom: "1.5rem" }}>
+                    <h3 style={{ fontSize: "1.3rem", marginBottom: "0.7rem" }}>
+                      {returnStudentDetails.firstName}{" "}
+                      {returnStudentDetails.lastName} (
+                      {returnStudentDetails.registrationNumber ||
+                        returnStudentDetails.rollNumber}
+                      )
+                    </h3>
+                    <div style={{ marginBottom: "0.5rem" }}>
+                      <span style={{ marginRight: "1.5rem" }}>
+                        Year:{" "}
+                        <b>
+                          {returnStudentDetails.academicCredentials?.year ||
+                            "-"}
+                        </b>
+                      </span>
+                      <span style={{ marginRight: "1.5rem" }}>
+                        Dept:{" "}
+                        <b>
+                          {returnStudentDetails.academicCredentials
+                            ?.department || "-"}
+                        </b>
+                      </span>
+                      <span>
+                        Status:{" "}
+                        <b
+                          style={{
+                            color: returnStudentDetails.isActive
+                              ? "#4ade80"
+                              : "#f87171",
+                          }}
+                        >
+                          {returnStudentDetails.isActive
+                            ? "🟢 Active"
+                            : "🔴 Inactive"}
+                        </b>
+                      </span>
+                    </div>
+                    <div style={{ marginBottom: "0.5rem" }}>
+                      <span style={{ marginRight: "1.5rem" }}>
+                        Email: <b>{returnStudentDetails.email}</b>
+                      </span>
+                      <span>
+                        Phone: <b>{returnStudentDetails.phone || "-"}</b>
+                      </span>
+                    </div>
+                  </div>
+                  {/* Dropdown of currently borrowed books */}
+                  <div style={{ width: "100%", marginBottom: "1.5rem" }}>
+                    <label
+                      htmlFor="return-book-dropdown"
+                      style={{
+                        fontWeight: 600,
+                        marginBottom: "0.5rem",
+                        display: "block",
+                      }}
+                    >
+                      Select Book to Return
+                    </label>
+                    <select
+                      id="return-book-dropdown"
+                      value={returnSelectedBookId}
+                      onChange={(e) => setReturnSelectedBookId(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "0.75rem",
+                        fontSize: "1.1rem",
+                        borderRadius: "8px",
+                        border: "1px solid #444",
+                        marginBottom: "1rem",
+                        color: "#222e3c",
+                        background: "#fff",
+                      }}
+                    >
+                      <option value="">Select a book</option>
+                      {returnStudentDetails.borrowedBooks &&
+                        returnStudentDetails.borrowedBooks
+                          .filter((b) => !b.returnedAt)
+                          .map((b) => (
+                            <option key={b.bookId} value={b.bookId}>
+                              {b.title} (ISBN: {b.isbn}) - Fine: ₹
+                              {b.fineAccrued || 0}
+                            </option>
+                          ))}
+                    </select>
+                  </div>
+                  <button
+                    style={{
+                      padding: "0.75rem 2rem",
+                      fontSize: "1.1rem",
+                      borderRadius: "8px",
+                      background: "#4ade80",
+                      color: "#181f2a",
+                      border: "none",
+                      fontWeight: 700,
+                      marginBottom: "1rem",
+                    }}
+                    // TODO: Add return logic here
+                  >
+                    Return
+                  </button>
+                  <button
+                    onClick={() => {
+                      setReturnSelectedStudent(null);
+                      setReturnStudentDetails(null);
+                      setReturnSelectedBookId("");
+                    }}
+                    style={{
+                      marginTop: 0,
+                      padding: "0.75rem 2rem",
+                      fontSize: "1.1rem",
+                      borderRadius: "8px",
+                      background: "#222e3c",
+                      color: "#fff",
+                      border: "none",
+                    }}
+                  >
+                    Back
+                  </button>
+                </>
+              ) : null}
+            </>
+          )}
+          <button
+            onClick={() => setReturnModalOpen(false)}
+            style={{
+              marginTop: "auto",
+              padding: "0.75rem 2rem",
+              fontSize: "1.1rem",
+              borderRadius: "8px",
+              background: "#222e3c",
+              color: "#fff",
+              border: "none",
+            }}
+          >
+            Close
+          </button>
         </div>
       )}
     </div>

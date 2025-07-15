@@ -47,13 +47,13 @@ const Layout = ({ children }) => {
       name: "Borrowings",
       href: "/borrowings",
       icon: ChartBarIcon,
-      roles: ["admin", "staff", "student"],
+      roles: ["admin", "student"],
     },
     {
       name: "Fines",
       href: "/fines",
       icon: ExclamationTriangleIcon,
-      roles: ["admin", "staff", "student"],
+      roles: ["admin", "student"],
     },
     {
       name: "Notifications",
