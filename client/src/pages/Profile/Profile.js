@@ -69,7 +69,7 @@ const Profile = () => {
               <div className="text-2xl font-bold">{totalReturned}</div>
             </div>
             <div className="flex-1 min-w-[120px] text-center">
-              <div className="text-gray-500">With Student</div>
+              <div className="text-gray-500">Un Returned</div>
               <div className="text-2xl font-bold">{withStudent}</div>
             </div>
             <div className="flex-1 min-w-[120px] text-center">

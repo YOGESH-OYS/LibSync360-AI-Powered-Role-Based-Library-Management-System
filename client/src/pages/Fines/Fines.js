@@ -83,7 +83,7 @@ const Fines = () => {
         <div className="space-y-4">
           {paginatedFines.map((f) => {
             const bookStatus =
-              f.borrowing?.status === "returned" ? "Returned" : "With Student";
+              f.borrowing?.status === "returned" ? "Returned" : "Un Returned";
             const fineStatus = f.status === "paid" ? "Paid" : "Unpaid";
             return (
               <div
