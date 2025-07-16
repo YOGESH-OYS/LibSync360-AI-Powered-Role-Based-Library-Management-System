@@ -525,7 +525,7 @@ router.post(
     res.clearCookie("token", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     });
     res.json({ success: true, message: "Logged out successfully." });
   })
