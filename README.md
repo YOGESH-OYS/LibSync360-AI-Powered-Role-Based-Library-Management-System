@@ -1,3 +1,4 @@
+## 🔗 Visit Demo : https://libsync360.onrender.com/
 # AI-Augmented Library Management System
 
 A comprehensive MERN-stack library management system for college campuses with AI-powered features including semantic search, personalized recommendations, sentiment analysis, and predictive analytics.

@@ -117,8 +117,6 @@ const Home = () => {
             <li><span className="font-semibold text-blue-600">• Admins:</span> Full control over users, roles, and system settings.</li>
             <li><span className="font-semibold text-blue-600">• Staff:</span> Manage day-to-day operations, lend resources, and assist students.</li>
             <li><span className="font-semibold text-blue-600">• Students:</span> Access resources, receive notifications, and track their own activity.</li>
-            <li><span className="font-semibold text-blue-600">• Auditing:</span> Every action is logged for transparency and compliance.</li>
-            <li><span className="font-semibold text-blue-600">• Custom Workflows:</span> Adaptable to your institution’s unique policies and needs.</li>
           </ul>
         </div>
       </section>
