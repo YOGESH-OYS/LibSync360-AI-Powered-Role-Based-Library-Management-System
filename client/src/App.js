@@ -23,7 +23,7 @@ import Help from "./pages/Help/Help";
 function App() {
   return (
     <div className="App">
-      <Routes basename="/tothepoint_login">
+      <Routes >
         {/* Public routes */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
