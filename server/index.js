@@ -41,24 +41,22 @@ const limiter = rateLimit({
 app.use("/api/", limiter);
 
 // CORS configuration
-const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || [];
+const allowedOrigins = process.env.CORS_ORIGIN?.split(",") || [];
 
-app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (e.g., Postman)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    } else {
-      return callback(
-        new Error(`CORS blocked for origin: ${origin}`),
-        false
-      );
-    }
-  },
-  credentials: true
-}));
-
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin (e.g., Postman)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error(`CORS blocked for origin: ${origin}`), false);
+      }
+    },
+    credentials: true,
+  })
+);
 
 // Body parsing middleware
 app.use(express.json({ limit: "10mb" }));
@@ -91,6 +89,12 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/admin", adminRoutes);
+
+// Serve React app for /borrowings route (for SPA refresh)
+const path = require("path");
+app.get("/borrowings", (req, res) => {
+  res.sendFile(path.join(__dirname, "../client/build", "index.html"));
+});
 
 // Error handling middleware
 app.use(errorHandler);

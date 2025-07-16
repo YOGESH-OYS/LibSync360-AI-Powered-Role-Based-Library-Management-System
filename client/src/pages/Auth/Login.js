@@ -225,7 +225,7 @@ const Login = () => {
             </div>
 
             <div className="mt-4 grid grid-cols-3 gap-3">
-              <motion.button
+              {/* <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 type="button"
@@ -233,7 +233,7 @@ const Login = () => {
                 className="flex-1 py-2 px-3 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
               >
                 Admin
-              </motion.button>
+              </motion.button> */}
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
